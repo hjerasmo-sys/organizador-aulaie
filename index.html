@@ -126,11 +126,11 @@
             float: right;
             cursor: pointer;
         }
-        .user-id-display {
+        .user-id-display, .last-update-display {
             font-size: 0.8rem;
             color: #64748b; /* slate-500 */
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 0.5rem; /* Reduced margin to keep them close */
             word-break: break-all; /* Ensures long IDs wrap */
         }
         .board {
@@ -220,6 +220,7 @@
         </div>
 
         <div id="userIdDisplay" class="user-id-display"></div>
+        <div id="lastUpdateDisplay" class="last-update-display"></div> <!-- Elemento para la fecha y usuario de última actualización -->
     </div>
 
     <script type="module">
@@ -270,6 +271,7 @@
             const messageText = document.getElementById('messageText');
             const userIdDisplay = document.getElementById('userIdDisplay');
             const classroomBoard = document.getElementById('classroomBoard');
+            const lastUpdateDisplay = document.getElementById('lastUpdateDisplay');
 
             // --- Verificación de elementos DOM ---
             const elementsToCheck = {
@@ -286,7 +288,8 @@
                 'messageBox': messageBox,
                 'messageText': messageText,
                 'userIdDisplay': userIdDisplay,
-                'classroomBoard': classroomBoard
+                'classroomBoard': classroomBoard,
+                'lastUpdateDisplay': lastUpdateDisplay
             };
 
             for (const id in elementsToCheck) {
@@ -436,6 +439,7 @@
 
                 classroomBoard.style.display = 'block'; // Mostrar el tablero cuando se crea el diseño
                 showMessage('¡Listo! Ahora puedes escribir el nombre de cada estudiante en su pupitre.', 'info');
+                lastUpdateDisplay.textContent = 'Distribución creada (no guardada aún).'; // Clear on new layout creation
             });
 
             /**
@@ -467,11 +471,13 @@
                 const numCols = parseInt(numColsInput.value);
                 const seatsData = Array.from(seatInputs).map(input => input.value.trim());
 
+                const currentTimestamp = new Date();
                 const layoutData = {
                     numRows: numRows,
                     numCols: numCols,
                     seats: seatsData,
-                    timestamp: new Date().toISOString() // Almacenar como cadena ISO
+                    timestamp: currentTimestamp.toISOString(), // Almacenar como cadena ISO
+                    lastUpdatedBy: userId // Guardar el ID del usuario que realizó la última actualización
                 };
 
                 try {
@@ -479,6 +485,7 @@
                     console.log('Intentando guardar en la ruta de Firestore:', layoutDocRef.path);
                     await setDoc(layoutDocRef, layoutData);
                     showMessage(`¡Distribución de aula guardada con éxito para ${selectedGrade}!`, 'success');
+                    lastUpdateDisplay.textContent = `Última actualización: ${currentTimestamp.toLocaleString('es-ES')} por ${userId}`; // Actualizar la fecha y el usuario
                 } catch (error) {
                     console.error("Error al guardar la distribución:", error);
                     showMessage('Error al guardar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de escritura para la ruta `artifacts/{projectId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
@@ -500,6 +507,7 @@
                     showMessage('No hay un grado seleccionado para cargar.', 'info');
                     classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
                     classroomBoard.style.display = 'none';
+                    lastUpdateDisplay.textContent = 'No hay distribución guardada para este grado.'; // Clear date display
                     return;
                 }
                 console.log(`Intentando cargar el diseño para el grado: ${selectedGrade}`);
@@ -527,14 +535,32 @@
                         });
                         classroomBoard.style.display = 'block';
                         showMessage(`¡Distribución de aula cargada con éxito para ${selectedGrade}!`, 'success');
+
+                        // Mostrar la fecha y el usuario de la última actualización
+                        let updateInfo = 'Fecha de última actualización no disponible.';
+                        if (savedLayout.timestamp) {
+                            const date = new Date(savedLayout.timestamp);
+                            updateInfo = `Última actualización: ${date.toLocaleString('es-ES')}`;
+                        }
+                        if (savedLayout.lastUpdatedBy) {
+                            updateInfo += ` por ${savedLayout.lastUpdatedBy}`;
+                        } else {
+                            if (savedLayout.timestamp) { // Only add if timestamp exists but user is missing
+                                updateInfo += ' (usuario no disponible)';
+                            }
+                        }
+                        lastUpdateDisplay.textContent = updateInfo;
+
                     } else {
                         showMessage(`No se encontró ninguna distribución de aula guardada para ${selectedGrade}.`, 'info');
                         classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
                         classroomBoard.style.display = 'none';
+                        lastUpdateDisplay.textContent = 'No hay distribución guardada para este grado.'; // Clear date display
                     }
                 } catch (error) {
                     console.error(`Error al cargar la distribución para ${selectedGrade}:`, error);
                     showMessage('Error al cargar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de lectura para la ruta `artifacts/{projectId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
+                    lastUpdateDisplay.textContent = 'Error al cargar la fecha de actualización.'; // Show error for date
                 }
             }
 
@@ -799,6 +825,8 @@
                         });
                         showMessage('Archivo CSV cargado y distribución de aula actualizada con éxito.', 'success');
                         console.log('Distribución de aula actualizada desde CSV.');
+
+                        lastUpdateDisplay.textContent = 'Cargado desde CSV (sin fecha ni usuario guardados en Firestore).';
 
 
                     } catch (error) {
