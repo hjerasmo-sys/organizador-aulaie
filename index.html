@@ -10,4 +10,695 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem; /* rounded-xl */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-lg */
+            padding: 2.5rem; /* p-10 */
+            width: 100%;
+            max-width: 960px; /* max-w-4xl */
+        }
+        .input-group label {
+            font-weight: 600; /* font-semibold */
+            margin-bottom: 0.5rem; /* mb-2 */
+            display: block;
+            color: #334155; /* slate-700 */
+        }
+        .input-group input[type="number"],
+        .input-group input[type="file"],
+        .input-group select { /* Added select for styling */
+            width: 100%;
+            padding: 0.75rem 1rem; /* py-3 px-4 */
+            border: 1px solid #cbd5e1; /* border-slate-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-size: 1rem; /* text-base */
+            color: #334155; /* slate-700 */
+            transition: all 0.2s ease-in-out;
+            background-color: #ffffff; /* Ensure select background is white */
+        }
+        .input-group input[type="number"]:focus,
+        .input-group input[type="file"]:focus,
+        .input-group select:focus { /* Added select for styling */
+            outline: none;
+            border-color: #6366f1; /* indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); /* ring-indigo-200 */
+        }
+        .button-primary {
+            background-image: linear-gradient(to right, #6366f1, #8b5cf6); /* Gradient from indigo-500 to violet-500 */
+            color: #ffffff;
+            font-weight: 700; /* font-bold */
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+        }
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); /* Slightly larger shadow on hover */
+        }
+        .grid-container {
+            display: grid;
+            gap: 1rem; /* gap-4 */
+            margin-top: 2rem; /* mt-8 */
+            padding: 1rem;
+            background-color: #f8fafc; /* slate-50 */
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 1px dashed #cbd5e1; /* border-slate-300 */
+            overflow-x: auto; /* Enable horizontal scrolling for wide grids */
+        }
+        .seat {
+            background-color: #e0e7ff; /* indigo-100 */
+            border: 1px solid #a5b4fc; /* indigo-300 */
+            border-top: 5px solid #6366f1; /* Darker top border for desk effect */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 0.5rem; /* p-2 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 0.9rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #4338ca; /* indigo-700 */
+            min-width: 100px; /* Minimum width for seats */
+            aspect-ratio: 1.2 / 1; /* Make seats slightly rectangular for desk effect */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+        }
+        .seat-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: transparent;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4338ca;
+            padding: 0;
+            outline: none;
+        }
+        .message-box {
+            background-color: #fee2e2; /* red-100 */
+            border: 1px solid #ef4444; /* red-500 */
+            color: #dc2626; /* red-600 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none; /* Hidden by default */
+        }
+        .message-box.show {
+            display: block;
+        }
+        .message-box button {
+            background: none;
+            border: none;
+            color: #dc2626;
+            font-weight: bold;
+            float: right;
+            cursor: pointer;
+        }
+        .user-id-display {
+            font-size: 0.8rem;
+            color: #64748b; /* slate-500 */
+            text-align: center;
+            margin-top: 1rem;
+            word-break: break-all; /* Ensures long IDs wrap */
+        }
+        .board {
+            background-color: #334155; /* slate-700 */
+            color: #ffffff;
+            font-weight: 700;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 80%; /* Adjust width as needed */
+            max-width: 600px; /* Max width for larger screens */
+            align-self: center; /* Center horizontally in a flex container */
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-4xl font-extrabold text-center text-slate-800 mb-8">Organizador de Aula ✨</h1>
+
+        <div class="message-box" id="messageBox">
+            <button onclick="document.getElementById('messageBox').classList.remove('show')">&times;</button>
+            <span id="messageText"></span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="grid grid-cols-1 gap-6">
+                <div class="input-group">
+                    <label for="numRows">Número de Filas:</label>
+                    <input type="number" id="numRows" value="5" min="1">
+                </div>
+                <div class="input-group">
+                    <label for="numCols">Número de Columnas:</label>
+                    <input type="number" id="numCols" value="6" min="1">
+                </div>
+                <!-- New Grade Selection -->
+                <div class="input-group">
+                    <label for="gradeSelect">Seleccionar Grado:</label>
+                    <select id="gradeSelect">
+                        <option value="601">Grado 601</option>
+                        <option value="602">Grado 602</option>
+                        <option value="603">Grado 603</option>
+                        <option value="604">Grado 604</option>
+                        <option value="701">Grado 701</option>
+                        <option value="702">Grado 702</option>
+                        <option value="703">Grado 703</option>
+                        <option value="704">Grado 704</option>
+                        <option value="801">Grado 801</option>
+                        <option value="802">Grado 802</option>
+                        <option value="803">Grado 803</option>
+                        <option value="901">Grado 901</option>
+                        <option value="902">Grado 902</option>
+                        <option value="903">Grado 903</option>
+                        <option value="1001">Grado 1001</option>
+                        <option value="1002">Grado 1002</option>
+                        <option value="1101">Grado 1101</option>
+                        <option value="1102">Grado 1102</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Board element added here -->
+        <div class="board" id="classroomBoard">
+            TABLERO
+        </div>
+
+        <div id="classroomDiagram" class="grid-container">
+            <p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>
+        </div>
         
+        <!-- Buttons moved to below the diagram -->
+        <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-8">
+            <button id="createLayoutBtn" class="button-primary">Crear Esquema de Aula</button>
+            <button id="saveLayoutBtn" class="button-primary">Guardar Distribución</button>
+            <button id="exportPdfBtn" class="button-primary">Exportar a PDF</button>
+            <button id="exportExcelBtn" class="button-primary">Exportar a Excel (CSV)</button>
+        </div>
+        <div class="input-group mt-6">
+            <label for="csvFile">Cargar desde archivo CSV (Exporta tu Excel a CSV primero):</label>
+            <input type="file" id="csvFile" accept=".csv">
+            <button id="loadCsvBtn" class="button-primary mt-4">Cargar desde CSV</button>
+        </div>
+
+        <div id="userIdDisplay" class="user-id-display"></div>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase (provided by the Canvas environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+
+        let db;
+        let auth;
+        let userId = null;
+        let isAuthReady = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const numRowsInput = document.getElementById('numRows');
+            const numColsInput = document.getElementById('numCols');
+            const gradeSelect = document.getElementById('gradeSelect');
+            const createLayoutBtn = document.getElementById('createLayoutBtn');
+            const saveLayoutBtn = document.getElementById('saveLayoutBtn');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            const exportExcelBtn = document.getElementById('exportExcelBtn');
+            const csvFileInput = document.getElementById('csvFile');
+            const loadCsvBtn = document.getElementById('loadCsvBtn');
+            const classroomDiagramDiv = document.getElementById('classroomDiagram');
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const userIdDisplay = document.getElementById('userIdDisplay');
+            const classroomBoard = document.getElementById('classroomBoard');
+
+            // Function to display messages in the custom message box
+            function showMessage(message, type = 'error') {
+                messageText.textContent = message;
+                messageBox.className = 'message-box show'; // Reset classes and show
+                if (type === 'error') {
+                    messageBox.style.backgroundColor = '#fee2e2'; // red-100
+                    messageBox.style.borderColor = '#ef4444'; // red-500
+                    messageBox.style.color = '#dc2626'; // red-600
+                } else if (type === 'info') {
+                    messageBox.style.backgroundColor = '#d1fae5'; // green-100
+                    messageBox.style.borderColor = '#34d399'; // green-400
+                    messageBox.style.color = '#065f46'; // green-800
+                } else if (type === 'success') {
+                    messageBox.style.backgroundColor = '#d1fae5'; /* green-100 */
+                    messageBox.style.borderColor = '#34d399'; /* green-400 */
+                    messageBox.style.color = '#065f46'; /* green-800 */
+                }
+            }
+
+            // --- Firebase Initialization and Authentication ---
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Authenticate user
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for auth state changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = `Tu ID de usuario: ${userId}`;
+                        isAuthReady = true;
+                        console.log('User authenticated. UID:', userId);
+                        // Load layout for the initially selected grade
+                        loadLayoutForSelectedGrade();
+                    } else {
+                        userId = null;
+                        userIdDisplay.textContent = 'No autenticado.';
+                        isAuthReady = false;
+                        console.log('User not authenticated.');
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error al inicializar Firebase o autenticar:", error);
+                showMessage("Error al iniciar la aplicación. Por favor, inténtalo de nuevo más tarde.", 'error');
+            }
+
+            // New: Event listener for grade selection change
+            gradeSelect.addEventListener('change', loadLayoutForSelectedGrade);
+
+            // Function to get the Firestore document reference based on selected grade
+            function getGradeLayoutDocRef(gradeId) {
+                // Using a public path for shared grade data
+                const path = `artifacts/${appId}/public/data/grades/${gradeId}`;
+                console.log('Firestore Path for Grade:', path);
+                return doc(db, path);
+            }
+
+            // Function to create the empty classroom layout
+            createLayoutBtn.addEventListener('click', () => {
+                const numRows = parseInt(numRowsInput.value);
+                const numCols = parseInt(numColsInput.value);
+
+                // Input validation
+                if (isNaN(numRows) || numRows < 1) {
+                    showMessage('Por favor, ingresa un número válido de filas (mínimo 1).', 'error');
+                    return;
+                }
+                if (isNaN(numCols) || numCols < 1) {
+                    showMessage('Por favor, ingresa un número válido de columnas (mínimo 1).', 'error');
+                    return;
+                }
+
+                const totalSeats = numRows * numCols;
+
+                // Clear previous diagram
+                classroomDiagramDiv.innerHTML = '';
+                classroomDiagramDiv.style.gridTemplateColumns = `repeat(${numCols}, minmax(100px, 1fr))`;
+
+                for (let i = 0; i < totalSeats; i++) {
+                    const seatDiv = document.createElement('div');
+                    seatDiv.classList.add('seat');
+                    
+                    const seatInput = document.createElement('input');
+                    seatInput.type = 'text';
+                    seatInput.classList.add('seat-input');
+                    seatInput.placeholder = `Estudiante ${i + 1}`;
+                    seatDiv.appendChild(seatInput);
+
+                    classroomDiagramDiv.appendChild(seatDiv);
+                }
+
+                // Show the board when layout is created
+                classroomBoard.style.display = 'block'; 
+                showMessage('¡Listo! Ahora puedes escribir el nombre de cada estudiante en su pupitre.', 'info');
+            });
+
+            // Function to save the current layout to Firestore for the selected grade
+            saveLayoutBtn.addEventListener('click', async () => {
+                if (!isAuthReady || !userId) {
+                    showMessage('Autenticación no lista. Por favor, espera o recarga la página.', 'error');
+                    return;
+                }
+
+                const selectedGrade = gradeSelect.value;
+                if (!selectedGrade) {
+                    showMessage('Por favor, selecciona un grado para guardar la distribución.', 'error');
+                    return;
+                }
+
+                const seatInputs = document.querySelectorAll('.seat-input');
+                if (seatInputs.length === 0) {
+                    showMessage(`No hay un esquema de aula para guardar en ${selectedGrade}. ¡Crea uno primero!`, 'info');
+                    return;
+                }
+
+                const numRows = parseInt(numRowsInput.value);
+                const numCols = parseInt(numColsInput.value);
+                const seatsData = Array.from(seatInputs).map(input => input.value.trim());
+
+                const layoutData = {
+                    numRows: numRows,
+                    numCols: numCols,
+                    seats: seatsData,
+                    timestamp: new Date() // Add a timestamp for tracking the latest update
+                };
+
+                try {
+                    const layoutDocRef = getGradeLayoutDocRef(selectedGrade);
+                    console.log('Attempting to save to Firestore path:', layoutDocRef.path);
+                    await setDoc(layoutDocRef, layoutData);
+                    showMessage(`¡Distribución de aula guardada con éxito para ${selectedGrade}!`, 'success');
+                } catch (error) {
+                    console.error("Error al guardar la distribución:", error);
+                    showMessage('Error al guardar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de escritura para la ruta `artifacts/{appId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
+                }
+            });
+
+            // Function to load the saved layout from Firestore for the selected grade
+            async function loadLayoutForSelectedGrade() {
+                if (!isAuthReady || !userId) {
+                    console.log('Load skipped: Auth not ready or userId is null.');
+                    return;
+                }
+
+                const selectedGrade = gradeSelect.value;
+                if (!selectedGrade) {
+                    showMessage('No hay un grado seleccionado para cargar.', 'info');
+                    classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
+                    classroomBoard.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const layoutDocRef = getGradeLayoutDocRef(selectedGrade);
+                    console.log('Attempting to load from Firestore path:', layoutDocRef.path);
+                    const docSnap = await getDoc(layoutDocRef);
+
+                    if (docSnap.exists()) {
+                        const savedLayout = docSnap.data();
+                        numRowsInput.value = savedLayout.numRows;
+                        numColsInput.value = savedLayout.numCols;
+
+                        // Recreate the layout grid based on loaded dimensions
+                        createLayoutBtn.click(); // Simulate click to redraw grid
+
+                        // Populate the seats with saved data
+                        const seatInputs = document.querySelectorAll('.seat-input');
+                        savedLayout.seats.forEach((studentName, index) => {
+                            if (seatInputs[index]) {
+                                seatInputs[index].value = studentName;
+                            }
+                        });
+                        // Ensure the board is visible when loading a layout
+                        classroomBoard.style.display = 'block';
+                        showMessage(`¡Distribución de aula cargada con éxito para ${selectedGrade}!`, 'success');
+                    } else {
+                        showMessage(`No se encontró ninguna distribución de aula guardada para ${selectedGrade}.`, 'info');
+                        // Clear current diagram and hide board if no layout is found for the grade
+                        classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
+                        classroomBoard.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error(`Error al cargar la distribución para ${selectedGrade}:`, error);
+                    showMessage('Error al cargar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de lectura para la ruta `artifacts/{appId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
+                }
+            }
+
+            // --- Export to PDF Function ---
+            exportPdfBtn.addEventListener('click', async () => {
+                const classroomContainerForPdf = document.createElement('div');
+                classroomContainerForPdf.style.display = 'flex';
+                classroomContainerForPdf.style.flexDirection = 'column';
+                classroomContainerForPdf.style.alignItems = 'center';
+                classroomContainerForPdf.style.padding = '20px'; // Add some padding
+
+                // Clone and append the board to the temporary container
+                const clonedBoard = classroomBoard.cloneNode(true);
+                // Ensure the cloned board is visible and has its styles
+                clonedBoard.style.display = 'block';
+                clonedBoard.style.width = '80%';
+                clonedBoard.style.maxWidth = '600px';
+                clonedBoard.style.marginBottom = '2rem'; // Add spacing below board
+                classroomContainerForPdf.appendChild(clonedBoard);
+
+
+                const classroomDiagram = document.getElementById('classroomDiagram');
+                if (classroomDiagram.children.length <= 1 && classroomDiagram.querySelector('p')) { // Check if only placeholder text is present
+                    showMessage('No hay un diagrama de aula para exportar a PDF. ¡Crea uno primero!', 'info');
+                    return;
+                }
+
+                // Store original values to restore them later
+                const seatInputs = document.querySelectorAll('.seat-input');
+                const originalValues = [];
+                
+                seatInputs.forEach(input => {
+                    originalValues.push(input.value); // Store original full name
+                    // Truncate name to first word for PDF export
+                    input.value = input.value.split(' ')[0] || ''; 
+                    input.style.border = 'none'; // Hide borders for cleaner PDF
+                    input.style.outline = 'none'; // Hide outline for cleaner PDF
+                });
+
+                // Set a temporary fixed width for the grid container to ensure proper rendering in PDF
+                const originalGridWidth = classroomDiagram.style.width;
+                classroomDiagram.style.width = `${classroomDiagram.scrollWidth}px`; // Set to content width
+
+                // Clone the classroom diagram for PDF generation
+                const clonedDiagram = classroomDiagram.cloneNode(true);
+                classroomContainerForPdf.appendChild(clonedDiagram);
+                document.body.appendChild(classroomContainerForPdf); // Temporarily append to body to be rendered by html2canvas
+
+                try {
+                    showMessage('Generando PDF...', 'info');
+                    const canvas = await html2canvas(classroomContainerForPdf, { scale: 2 }); 
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    const margin = 10; // 10mm margin on each side
+                    const contentWidth = pdfWidth - 2 * margin;
+
+                    // Calculate image height while maintaining aspect ratio
+                    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+                    let position = margin;
+                    // Check if content exceeds a single page height and paginate if necessary
+                    if (imgHeight > (pdfHeight - 2 * margin)) {
+                             for (let i = 0; i < Math.ceil(imgHeight / (pdfHeight - 2 * margin)); i++) {
+                                 const newCanvas = document.createElement('canvas');
+                                 const newContext = newCanvas.getContext('2d');
+                                 newCanvas.width = canvas.width;
+                                 newCanvas.height = Math.min(canvas.height - i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), ((pdfHeight - 2 * margin) * canvas.width / contentWidth));
+                                 
+                                 newContext.drawImage(canvas, 0, i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), canvas.width, newCanvas.height, 0, 0, newCanvas.width, newCanvas.height);
+                                 const newImgData = newCanvas.toDataURL('image/png');
+                                 
+                                 if (i > 0) {
+                                     pdf.addPage(); // Add a new page for overflow content
+                                 }
+                                 pdf.addImage(newImgData, 'PNG', margin, margin, contentWidth, (newCanvas.height * contentWidth) / newCanvas.width);
+                             }
+                    } else {
+                        // Add image to the first page if it fits
+                        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+                    }
+                    
+                    pdf.save('distribucion_aula.pdf'); // Save the PDF
+                    showMessage('PDF exportado con éxito.', 'success');
+                } catch (error) {
+                    console.error('Error al exportar PDF:', error);
+                    showMessage('Error al exportar el PDF. Por favor, inténtalo de nuevo.', 'error');
+                } finally {
+                    // Clean up: restore original values to inputs and remove temporary container
+                    seatInputs.forEach((input, index) => {
+                        input.value = originalValues[index]; // Restore original full name
+                        input.style.border = ''; // Restore default
+                        input.style.outline = ''; // Restore default
+                    });
+                    classroomDiagram.style.width = originalGridWidth; // Restore original grid width
+                    document.body.removeChild(classroomContainerForPdf); // Remove the temporary container from the DOM
+                }
+            });
+
+            // --- Export to Excel (CSV) Function ---
+            exportExcelBtn.addEventListener('click', () => {
+                const numRows = parseInt(numRowsInput.value);
+                const numCols = parseInt(numColsInput.value);
+                const selectedGrade = gradeSelect.value; // Get the selected grade
+                const seatInputs = document.querySelectorAll('.seat-input');
+                if (seatInputs.length === 0) {
+                    showMessage('No hay un diagrama de aula para exportar a Excel. ¡Crea uno primero!', 'info');
+                    return;
+                }
+
+                let csvContent = `Grado: ${selectedGrade}\n`; // Add selected grade
+                csvContent += `Total Filas: ${numRows}\nTotal Columnas: ${numCols}\n\n`; // Add total rows and columns
+                csvContent += "Numero,Nombre del Estudiante\n"; // CSV Header for enumerated list
+
+                let studentCount = 1;
+                for (let i = 0; i < seatInputs.length; i++) {
+                    let studentName = seatInputs[i].value.trim();
+                    
+                    if (studentName) { // Only add if student name exists
+                        // Escape commas and double quotes in student names
+                        if (studentName.includes(',') || studentName.includes('"')) {
+                            studentName = `"${studentName.replace(/"/g, '""')}"`;
+                        }
+                        csvContent += `${studentCount},${studentName}\n`;
+                        studentCount++;
+                    }
+                }
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                if (link.download !== undefined) { // Feature detection for download attribute
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `distribucion_aula_${selectedGrade}_enumerada.csv`); // Include grade in filename
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showMessage('Archivo Excel (CSV) enumerado exportado con éxito.', 'success');
+                } else {
+                    showMessage('Tu navegador no soporta la descarga de archivos CSV directamente.', 'error');
+                }
+            });
+
+            // --- Load from CSV Function ---
+            loadCsvBtn.addEventListener('click', () => {
+                const file = csvFileInput.files[0];
+                if (!file) {
+                    showMessage('Por favor, selecciona un archivo CSV primero.', 'error');
+                    return;
+                }
+
+                // Check if the selected file is indeed a CSV
+                if (!file.name.endsWith('.csv')) {
+                    showMessage('Por favor, selecciona un archivo CSV. Puedes exportar tu Excel a CSV primero.', 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const csvContent = e.target.result;
+                        const rows = csvContent.split('\n').map(row => row.trim()).filter(row => row !== ''); // Filter out empty lines
+                        
+                        let loadedGrade = null;
+                        let loadedNumRows = null;
+                        let loadedNumCols = null;
+                        let dataStartIndex = 0;
+
+                        // Parse metadata from the first few lines
+                        for (let i = 0; i < rows.length; i++) {
+                            const row = rows[i];
+                            if (row.startsWith('Grado:')) {
+                                loadedGrade = row.split(':')[1].trim();
+                            } else if (row.startsWith('Total Filas:')) {
+                                loadedNumRows = parseInt(row.split(':')[1].trim());
+                            } else if (row.startsWith('Total Columnas:')) {
+                                loadedNumCols = parseInt(row.split(':')[1].trim());
+                            } else if (row.toLowerCase().includes('numero,nombre del estudiante')) {
+                                dataStartIndex = i + 1; // Data starts after the header
+                                break; // Stop looking for metadata/header
+                            }
+                        }
+                        
+                        const studentNames = [];
+                        for (let i = dataStartIndex; i < rows.length; i++) {
+                            // Simple CSV parsing: split by comma, ignoring number, and unescape quotes
+                            const parts = rows[i].split(',');
+                            let studentName = parts.slice(1).join(',').trim(); // Take everything after the first comma
+                            
+                            if (studentName.startsWith('"') && studentName.endsWith('"')) {
+                                studentName = studentName.slice(1, -1).replace(/""/g, '"'); // Unescape quotes
+                            }
+                            
+                            if (studentName) {
+                                studentNames.push(studentName);
+                            }
+                        }
+
+                        if (studentNames.length === 0) {
+                            showMessage('No se encontraron estudiantes en el archivo CSV. Asegúrate de que el formato sea "Numero,Nombre del Estudiante".', 'error');
+                            return;
+                        }
+                        
+                        // Apply loaded metadata or calculate defaults
+                        if (loadedGrade) {
+                            gradeSelect.value = loadedGrade;
+                        } else {
+                            // If grade not found in CSV, try to load existing layout for current selected grade
+                            // No need to show error, just use current selection
+                        }
+
+                        if (!isNaN(loadedNumRows) && loadedNumRows > 0) {
+                            numRowsInput.value = loadedNumRows;
+                        } else {
+                            // Fallback if rows not in CSV or invalid
+                            numRowsInput.value = Math.ceil(studentNames.length / parseInt(numColsInput.value || 6)); // Use existing cols or default
+                        }
+
+                        if (!isNaN(loadedNumCols) && loadedNumCols > 0) {
+                            numColsInput.value = loadedNumCols;
+                        } else {
+                            // Fallback if columns not in CSV or invalid
+                            numColsInput.value = Math.ceil(studentNames.length / parseInt(numRowsInput.value || 5)); // Use existing rows or default
+                        }
+
+                        // Create the layout and populate the seats
+                        createLayoutBtn.click();
+                        const seatInputs = document.querySelectorAll('.seat-input');
+                        studentNames.forEach((name, index) => {
+                            if (seatInputs[index]) {
+                                seatInputs[index].value = name;
+                            }
+                        });
+                        
+                        showMessage(`Se cargaron ${studentNames.length} estudiantes desde el archivo CSV.`, 'success');
+
+                    } catch (error) {
+                        console.error('Error al procesar el archivo CSV:', error);
+                        showMessage('Error al procesar el archivo. Asegúrate de que el formato sea correcto y que las filas/columnas sean números válidos.', 'error');
+                    }
+                };
+
+                reader.onerror = () => {
+                    showMessage('No se pudo leer el archivo. Inténtalo de nuevo.', 'error');
+                };
+
+                reader.readAsText(file);
+            });
+        });
+    </script>
+</body>
+</html>
