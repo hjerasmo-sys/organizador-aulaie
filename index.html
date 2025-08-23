@@ -228,10 +228,25 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables for Firebase (provided by the Canvas environment)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+        // Variables globales para la configuración de Firebase y el ID de la aplicación.
+        // IMPORTANTE: NO modifiques estas variables directamente. El entorno de Canvas
+        // las inyectará automáticamente cuando la aplicación se ejecute en él.
+        // Si ejecutas este código localmente (fuera del entorno de Canvas), se usará
+        // tu configuración de Firebase predeterminada como respaldo.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDf3r2W8GXIxLejU7l8T-AKmfWFwBXB_cs",
+            authDomain: "appclases-32445.firebaseapp.com",
+            projectId: "appclases-32445",
+            storageBucket: "appclases-32445.firebasestorage.app",
+            messagingSenderId: "356977293092",
+            appId: "1:356977293092:web:c5f6943246f00f3baca5b1"
+        };
+        
+        // __app_id se proporciona por el entorno de Canvas. Usamos projectId de firebaseConfig como respaldo.
+        const appIdForFirestore = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+        
+        // __initial_auth_token se proporciona por el entorno de Canvas. Usamos null como respaldo.
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db;
         let auth;
@@ -239,6 +254,8 @@
         let isAuthReady = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log("DOM content loaded. Starting app initialization and element fetching.");
+
             const numRowsInput = document.getElementById('numRows');
             const numColsInput = document.getElementById('numCols');
             const gradeSelect = document.getElementById('gradeSelect');
@@ -254,10 +271,43 @@
             const userIdDisplay = document.getElementById('userIdDisplay');
             const classroomBoard = document.getElementById('classroomBoard');
 
-            // Function to display messages in the custom message box
+            // --- Verificación de elementos DOM ---
+            const elementsToCheck = {
+                'numRowsInput': numRowsInput,
+                'numColsInput': numColsInput,
+                'gradeSelect': gradeSelect,
+                'createLayoutBtn': createLayoutBtn,
+                'saveLayoutBtn': saveLayoutBtn,
+                'exportPdfBtn': exportPdfBtn,
+                'exportExcelBtn': exportExcelBtn,
+                'csvFileInput': csvFileInput,
+                'loadCsvBtn': loadCsvBtn,
+                'classroomDiagramDiv': classroomDiagramDiv,
+                'messageBox': messageBox,
+                'messageText': messageText,
+                'userIdDisplay': userIdDisplay,
+                'classroomBoard': classroomBoard
+            };
+
+            for (const id in elementsToCheck) {
+                if (!elementsToCheck[id]) {
+                    console.error(`Error crítico: El elemento DOM con ID '${id}' no se encontró. Los botones pueden no funcionar.`);
+                    showMessage(`Error: El elemento de la interfaz con ID '${id}' no se encontró. La aplicación podría no funcionar correctamente. Revisa el código HTML.`, 'error');
+                } else {
+                    console.log(`Elemento DOM con ID '${id}' encontrado.`);
+                }
+            }
+            // --- Fin de la verificación de elementos DOM ---
+
+
+            /**
+             * Muestra un mensaje en la caja de mensajes personalizada.
+             * @param {string} message - El mensaje a mostrar.
+             * @param {'error'|'info'|'success'} type - El tipo de mensaje para determinar el estilo.
+             */
             function showMessage(message, type = 'error') {
                 messageText.textContent = message;
-                messageBox.className = 'message-box show'; // Reset classes and show
+                messageBox.className = 'message-box show'; // Reiniciar clases y mostrar
                 if (type === 'error') {
                     messageBox.style.backgroundColor = '#fee2e2'; // red-100
                     messageBox.style.borderColor = '#ef4444'; // red-500
@@ -273,27 +323,42 @@
                 }
             }
 
-            // --- Firebase Initialization and Authentication ---
+            // --- Inicialización y Autenticación de Firebase ---
             try {
+                // Inicializar la aplicación de Firebase
                 const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
+                
+                // Obtener instancias de Auth y Firestore
                 auth = getAuth(app);
+                db = getFirestore(app);
 
-                // Authenticate user
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
+                console.log('Firebase App initialized with config:', firebaseConfig);
+                console.log('Auth service instance obtained:', auth);
+                if (auth && auth.app && auth.app.options) {
+                    console.log('Auth service options (from app config):', auth.app.options);
                 } else {
-                    await signInAnonymously(auth);
+                    console.warn('Auth service or its app options not immediately available after getAuth.');
                 }
 
-                // Listen for auth state changes
+                // Iniciar sesión con token personalizado o de forma anónima si no se proporciona token
+                if (initialAuthToken) {
+                    console.log('Attempting signInWithCustomToken...');
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    console.log('Attempting signInAnonymously...');
+                    await signInAnonymously(auth);
+                }
+                console.log('Authentication attempt completed.');
+
+
+                // Escuchar los cambios en el estado de autenticación
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
                         userIdDisplay.textContent = `Tu ID de usuario: ${userId}`;
                         isAuthReady = true;
                         console.log('User authenticated. UID:', userId);
-                        // Load layout for the initially selected grade
+                        // Cargar el diseño una vez autenticado
                         loadLayoutForSelectedGrade();
                     } else {
                         userId = null;
@@ -305,38 +370,54 @@
 
             } catch (error) {
                 console.error("Error al inicializar Firebase o autenticar:", error);
-                showMessage("Error al iniciar la aplicación. Por favor, inténtalo de nuevo más tarde.", 'error');
+                if (error.code === 'auth/configuration-not-found') {
+                    showMessage("Error de Firebase: La configuración de autenticación no se encontró. Esto **NO es un error de código**, es un problema en la **configuración de tu proyecto en la Consola de Firebase**. Por favor, asegúrate de que el método de inicio de sesión **'Anónimo' esté HABILITADO** en la sección 'Authentication' de tu proyecto.", 'error');
+                } else if (error.code === 'auth/network-request-failed') {
+                    showMessage("Error de Firebase: Falló la conexión de red. Por favor, verifica tu conexión a Internet.", 'error');
+                } else {
+                    showMessage("Error al iniciar la aplicación. Por favor, inténtalo de nuevo más tarde. Detalles: " + error.message, 'error');
+                }
             }
 
-            // New: Event listener for grade selection change
+            // Listener de evento para el cambio de selección de grado
             gradeSelect.addEventListener('change', loadLayoutForSelectedGrade);
 
-            // Function to get the Firestore document reference based on selected grade
+            /**
+             * Obtiene la referencia del documento de Firestore para el diseño de un grado específico.
+             * Utiliza la ruta de datos públicos para el acceso colaborativo.
+             * @param {string} gradeId - El ID del grado (ej. "601").
+             * @returns {DocumentReference} - La referencia del documento de Firestore.
+             */
             function getGradeLayoutDocRef(gradeId) {
-                // Using a public path for shared grade data
-                const path = `artifacts/${appId}/public/data/grades/${gradeId}`;
+                // IMPORTANTE: Usando `appIdForFirestore` y colección pública para datos compartidos
+                const path = `artifacts/${appIdForFirestore}/public/data/grades/${gradeId}`;
                 console.log('Firestore Path for Grade:', path);
                 return doc(db, path);
             }
 
-            // Function to create the empty classroom layout
+            /**
+             * Crea la cuadrícula del diseño del aula basándose en la entrada del usuario para filas y columnas.
+             */
             createLayoutBtn.addEventListener('click', () => {
+                console.log("Botón 'Crear Esquema de Aula' clicado!");
                 const numRows = parseInt(numRowsInput.value);
                 const numCols = parseInt(numColsInput.value);
 
-                // Input validation
                 if (isNaN(numRows) || numRows < 1) {
                     showMessage('Por favor, ingresa un número válido de filas (mínimo 1).', 'error');
+                    console.error('Error: Número de filas inválido:', numRows);
                     return;
                 }
                 if (isNaN(numCols) || numCols < 1) {
                     showMessage('Por favor, ingresa un número válido de columnas (mínimo 1).', 'error');
+                    console.error('Error: Número de columnas inválido:', numCols);
                     return;
                 }
+                console.log(`Creando diseño con ${numRows} filas y ${numCols} columnas.`);
+
 
                 const totalSeats = numRows * numCols;
 
-                // Clear previous diagram
                 classroomDiagramDiv.innerHTML = '';
                 classroomDiagramDiv.style.gridTemplateColumns = `repeat(${numCols}, minmax(100px, 1fr))`;
 
@@ -353,17 +434,22 @@
                     classroomDiagramDiv.appendChild(seatDiv);
                 }
 
-                // Show the board when layout is created
-                classroomBoard.style.display = 'block'; 
+                classroomBoard.style.display = 'block'; // Mostrar el tablero cuando se crea el diseño
                 showMessage('¡Listo! Ahora puedes escribir el nombre de cada estudiante en su pupitre.', 'info');
             });
 
-            // Function to save the current layout to Firestore for the selected grade
+            /**
+             * Guarda el diseño actual del aula en Firestore para el grado seleccionado.
+             */
             saveLayoutBtn.addEventListener('click', async () => {
+                console.log("Botón 'Guardar Distribución' clicado!");
                 if (!isAuthReady || !userId) {
                     showMessage('Autenticación no lista. Por favor, espera o recarga la página.', 'error');
+                    console.warn('Advertencia: Intento de guardar fallido, autenticación no lista o ID de usuario ausente.');
                     return;
                 }
+                console.log('Autenticación lista. Procediendo a guardar.');
+
 
                 const selectedGrade = gradeSelect.value;
                 if (!selectedGrade) {
@@ -385,24 +471,27 @@
                     numRows: numRows,
                     numCols: numCols,
                     seats: seatsData,
-                    timestamp: new Date() // Add a timestamp for tracking the latest update
+                    timestamp: new Date().toISOString() // Almacenar como cadena ISO
                 };
 
                 try {
                     const layoutDocRef = getGradeLayoutDocRef(selectedGrade);
-                    console.log('Attempting to save to Firestore path:', layoutDocRef.path);
+                    console.log('Intentando guardar en la ruta de Firestore:', layoutDocRef.path);
                     await setDoc(layoutDocRef, layoutData);
                     showMessage(`¡Distribución de aula guardada con éxito para ${selectedGrade}!`, 'success');
                 } catch (error) {
                     console.error("Error al guardar la distribución:", error);
-                    showMessage('Error al guardar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de escritura para la ruta `artifacts/{appId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
+                    showMessage('Error al guardar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de escritura para la ruta `artifacts/{projectId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
                 }
             });
 
-            // Function to load the saved layout from Firestore for the selected grade
+            /**
+             * Carga el diseño del aula para el grado actualmente seleccionado desde Firestore.
+             */
             async function loadLayoutForSelectedGrade() {
+                console.log("Función loadLayoutForSelectedGrade llamada.");
                 if (!isAuthReady || !userId) {
-                    console.log('Load skipped: Auth not ready or userId is null.');
+                    console.log('Carga omitida: Autenticación no lista o userId es nulo.');
                     return;
                 }
 
@@ -413,162 +502,172 @@
                     classroomBoard.style.display = 'none';
                     return;
                 }
+                console.log(`Intentando cargar el diseño para el grado: ${selectedGrade}`);
+
 
                 try {
                     const layoutDocRef = getGradeLayoutDocRef(selectedGrade);
-                    console.log('Attempting to load from Firestore path:', layoutDocRef.path);
+                    console.log('Intentando cargar desde la ruta de Firestore:', layoutDocRef.path);
                     const docSnap = await getDoc(layoutDocRef);
 
                     if (docSnap.exists()) {
                         const savedLayout = docSnap.data();
                         numRowsInput.value = savedLayout.numRows;
                         numColsInput.value = savedLayout.numCols;
+                        console.log('Diseño cargado:', savedLayout);
 
-                        // Recreate the layout grid based on loaded dimensions
-                        createLayoutBtn.click(); // Simulate click to redraw grid
+                        // Crear el diseño primero para asegurar que existan los inputs de los asientos
+                        createLayoutBtn.click();
 
-                        // Populate the seats with saved data
                         const seatInputs = document.querySelectorAll('.seat-input');
                         savedLayout.seats.forEach((studentName, index) => {
                             if (seatInputs[index]) {
                                 seatInputs[index].value = studentName;
                             }
                         });
-                        // Ensure the board is visible when loading a layout
                         classroomBoard.style.display = 'block';
                         showMessage(`¡Distribución de aula cargada con éxito para ${selectedGrade}!`, 'success');
                     } else {
                         showMessage(`No se encontró ninguna distribución de aula guardada para ${selectedGrade}.`, 'info');
-                        // Clear current diagram and hide board if no layout is found for the grade
                         classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
                         classroomBoard.style.display = 'none';
                     }
                 } catch (error) {
                     console.error(`Error al cargar la distribución para ${selectedGrade}:`, error);
-                    showMessage('Error al cargar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de lectura para la ruta `artifacts/{appId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
+                    showMessage('Error al cargar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de lectura para la ruta `artifacts/{projectId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
                 }
             }
 
-            // --- Export to PDF Function ---
+            /**
+             * Exporta el diagrama del aula actual a un documento PDF.
+             * Utiliza html2canvas para renderizar el HTML a una imagen, luego jsPDF para crear el PDF.
+             */
             exportPdfBtn.addEventListener('click', async () => {
+                console.log("Botón 'Exportar a PDF' clicado!");
                 const classroomContainerForPdf = document.createElement('div');
                 classroomContainerForPdf.style.display = 'flex';
                 classroomContainerForPdf.style.flexDirection = 'column';
                 classroomContainerForPdf.style.alignItems = 'center';
-                classroomContainerForPdf.style.padding = '20px'; // Add some padding
+                classroomContainerForPdf.style.padding = '20px';
+                classroomContainerForPdf.style.backgroundColor = '#ffffff'; // Asegurar fondo blanco para PDF
+                classroomContainerForPdf.style.boxShadow = 'none'; // Sin sombra para PDF
 
-                // Clone and append the board to the temporary container
+                // Clonar y añadir el elemento del tablero para el PDF
                 const clonedBoard = classroomBoard.cloneNode(true);
-                // Ensure the cloned board is visible and has its styles
                 clonedBoard.style.display = 'block';
                 clonedBoard.style.width = '80%';
                 clonedBoard.style.maxWidth = '600px';
-                clonedBoard.style.marginBottom = '2rem'; // Add spacing below board
+                clonedBoard.style.marginBottom = '2rem';
                 classroomContainerForPdf.appendChild(clonedBoard);
 
-
                 const classroomDiagram = document.getElementById('classroomDiagram');
-                if (classroomDiagram.children.length <= 1 && classroomDiagram.querySelector('p')) { // Check if only placeholder text is present
+                // Comprobar si el diagrama contiene solo el párrafo de marcador de posición inicial
+                if (classroomDiagram.children.length <= 1 && classroomDiagram.querySelector('p')) {
                     showMessage('No hay un diagrama de aula para exportar a PDF. ¡Crea uno primero!', 'info');
                     return;
                 }
 
-                // Store original values to restore them later
+                // Ajustar temporalmente el estilo de los inputs y guardar los valores originales para la exportación a PDF
                 const seatInputs = document.querySelectorAll('.seat-input');
                 const originalValues = [];
                 
                 seatInputs.forEach(input => {
-                    originalValues.push(input.value); // Store original full name
-                    // Truncate name to first word for PDF export
-                    input.value = input.value.split(' ')[0] || ''; 
-                    input.style.border = 'none'; // Hide borders for cleaner PDF
-                    input.style.outline = 'none'; // Hide outline for cleaner PDF
+                    originalValues.push(input.value);
+                    // Para PDF, queremos solo el primer nombre o el nombre completo sin estilos de input adicionales
+                    input.style.border = 'none';
+                    input.style.outline = 'none';
                 });
 
-                // Set a temporary fixed width for the grid container to ensure proper rendering in PDF
+                // Ajustar temporalmente el ancho de la cuadrícula para una mejor renderización de cuadrículas anchas en PDF
                 const originalGridWidth = classroomDiagram.style.width;
-                classroomDiagram.style.width = `${classroomDiagram.scrollWidth}px`; // Set to content width
+                classroomDiagram.style.width = `${classroomDiagram.scrollWidth}px`; // Establecer ancho explícito para evitar problemas de desbordamiento
 
-                // Clone the classroom diagram for PDF generation
                 const clonedDiagram = classroomDiagram.cloneNode(true);
                 classroomContainerForPdf.appendChild(clonedDiagram);
-                document.body.appendChild(classroomContainerForPdf); // Temporarily append to body to be rendered by html2canvas
+                document.body.appendChild(classroomContainerForPdf); // Añadir temporalmente para obtener las dimensiones correctas para html2canvas
 
                 try {
                     showMessage('Generando PDF...', 'info');
-                    const canvas = await html2canvas(classroomContainerForPdf, { scale: 2 }); 
+                    console.log('Iniciando html2canvas para generar la imagen del PDF.');
+                    // Renderizar todo el contenedor a un canvas
+                    const canvas = await html2canvas(classroomContainerForPdf, { scale: 2 }); // Aumentar la escala para una mejor resolución
                     const imgData = canvas.toDataURL('image/png');
                     
                     const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' para retrato, 'mm' para milímetros, 'a4' para tamaño A4
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
-                    const margin = 10; // 10mm margin on each side
+                    const margin = 10; // Margen de 10 mm en todos los lados
                     const contentWidth = pdfWidth - 2 * margin;
 
-                    // Calculate image height while maintaining aspect ratio
                     const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
                     let position = margin;
-                    // Check if content exceeds a single page height and paginate if necessary
+                    // Comprobar si el contenido es más alto que una sola página
                     if (imgHeight > (pdfHeight - 2 * margin)) {
-                             for (let i = 0; i < Math.ceil(imgHeight / (pdfHeight - 2 * margin)); i++) {
-                                 const newCanvas = document.createElement('canvas');
-                                 const newContext = newCanvas.getContext('2d');
-                                 newCanvas.width = canvas.width;
-                                 newCanvas.height = Math.min(canvas.height - i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), ((pdfHeight - 2 * margin) * canvas.width / contentWidth));
-                                 
-                                 newContext.drawImage(canvas, 0, i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), canvas.width, newCanvas.height, 0, 0, newCanvas.width, newCanvas.height);
-                                 const newImgData = newCanvas.toDataURL('image/png');
-                                 
-                                 if (i > 0) {
-                                     pdf.addPage(); // Add a new page for overflow content
-                                 }
-                                 pdf.addImage(newImgData, 'PNG', margin, margin, contentWidth, (newCanvas.height * contentWidth) / newCanvas.width);
-                             }
+                        for (let i = 0; i < Math.ceil(imgHeight / (pdfHeight - 2 * margin)); i++) {
+                            const newCanvas = document.createElement('canvas');
+                            const newContext = newCanvas.getContext('2d');
+                            newCanvas.width = canvas.width;
+                            newCanvas.height = Math.min(canvas.height - i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), ((pdfHeight - 2 * margin) * canvas.width / contentWidth));
+                            
+                            newContext.drawImage(canvas, 0, i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), canvas.width, newCanvas.height, 0, 0, newCanvas.width, newCanvas.height);
+                            const newImgData = newCanvas.toDataURL('image/png');
+                            
+                            if (i > 0) {
+                                pdf.addPage();
+                            }
+                            pdf.addImage(newImgData, 'PNG', margin, margin, contentWidth, (newCanvas.height * contentWidth) / newCanvas.width);
+                        }
                     } else {
-                        // Add image to the first page if it fits
                         pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
                     }
                     
-                    pdf.save('distribucion_aula.pdf'); // Save the PDF
+                    pdf.save(`distribucion_aula_${gradeSelect.value}.pdf`);
                     showMessage('PDF exportado con éxito.', 'success');
+                    console.log('PDF exportado correctamente.');
                 } catch (error) {
                     console.error('Error al exportar PDF:', error);
                     showMessage('Error al exportar el PDF. Por favor, inténtalo de nuevo.', 'error');
                 } finally {
-                    // Clean up: restore original values to inputs and remove temporary container
+                    // Restaurar el estilo original de los inputs y los valores
                     seatInputs.forEach((input, index) => {
-                        input.value = originalValues[index]; // Restore original full name
-                        input.style.border = ''; // Restore default
-                        input.style.outline = ''; // Restore default
+                        input.value = originalValues[index];
+                        input.style.border = ''; // Eliminar estilo en línea
+                        input.style.outline = ''; // Eliminar estilo en línea
                     });
-                    classroomDiagram.style.width = originalGridWidth; // Restore original grid width
-                    document.body.removeChild(classroomContainerForPdf); // Remove the temporary container from the DOM
+                    classroomDiagram.style.width = originalGridWidth; // Restaurar ancho original
+                    document.body.removeChild(classroomContainerForPdf); // Eliminar contenedor temporal
                 }
             });
 
-            // --- Export to Excel (CSV) Function ---
+            /**
+             * Exporta los nombres de los estudiantes del diagrama del aula a un archivo CSV.
+             * Incluye el grado, filas, columnas y una lista numerada de estudiantes.
+             */
             exportExcelBtn.addEventListener('click', () => {
+                console.log("Botón 'Exportar a Excel (CSV)' clicado!");
                 const numRows = parseInt(numRowsInput.value);
                 const numCols = parseInt(numColsInput.value);
-                const selectedGrade = gradeSelect.value; // Get the selected grade
+                const selectedGrade = gradeSelect.value;
                 const seatInputs = document.querySelectorAll('.seat-input');
                 if (seatInputs.length === 0) {
                     showMessage('No hay un diagrama de aula para exportar a Excel. ¡Crea uno primero!', 'info');
                     return;
                 }
+                console.log('Generando contenido CSV.');
 
-                let csvContent = `Grado: ${selectedGrade}\n`; // Add selected grade
-                csvContent += `Total Filas: ${numRows}\nTotal Columnas: ${numCols}\n\n`; // Add total rows and columns
-                csvContent += "Numero,Nombre del Estudiante\n"; // CSV Header for enumerated list
+
+                let csvContent = `Grado: ${selectedGrade}\n`;
+                csvContent += `Total Filas: ${numRows}\nTotal Columnas: ${numCols}\n\n`;
+                csvContent += "Numero,Nombre del Estudiante\n";
 
                 let studentCount = 1;
                 for (let i = 0; i < seatInputs.length; i++) {
                     let studentName = seatInputs[i].value.trim();
                     
-                    if (studentName) { // Only add if student name exists
-                        // Escape commas and double quotes in student names
+                    if (studentName) {
+                        // Manejar comas y comillas dobles en los nombres de los estudiantes para CSV
                         if (studentName.includes(',') || studentName.includes('"')) {
                             studentName = `"${studentName.replace(/"/g, '""')}"`;
                         }
@@ -579,123 +678,134 @@
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
-                if (link.download !== undefined) { // Feature detection for download attribute
+                if (link.download !== undefined) {
                     const url = URL.createObjectURL(blob);
                     link.setAttribute('href', url);
-                    link.setAttribute('download', `distribucion_aula_${selectedGrade}_enumerada.csv`); // Include grade in filename
+                    link.setAttribute('download', `distribucion_aula_${selectedGrade}_enumerada.csv`);
                     link.style.visibility = 'hidden';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     showMessage('Archivo Excel (CSV) enumerado exportado con éxito.', 'success');
+                    console.log('Archivo CSV exportado correctamente.');
                 } else {
                     showMessage('Tu navegador no soporta la descarga de archivos CSV directamente.', 'error');
+                    console.error('Error: Navegador no soporta descarga de CSV.');
                 }
             });
 
-            // --- Load from CSV Function ---
+            /**
+             * Carga los nombres de los estudiantes desde un archivo CSV seleccionado y rellena el diagrama del aula.
+             * Se espera que el archivo CSV tenga una fila de encabezado y luego "Numero,Nombre del Estudiante".
+             * También intenta analizar "Grado:", "Total Filas:", "Total Columnas:" de las primeras líneas.
+             */
             loadCsvBtn.addEventListener('click', () => {
+                console.log("Botón 'Cargar desde CSV' clicado!");
                 const file = csvFileInput.files[0];
                 if (!file) {
                     showMessage('Por favor, selecciona un archivo CSV primero.', 'error');
+                    console.error('Error: No se ha seleccionado ningún archivo CSV.');
                     return;
                 }
 
-                // Check if the selected file is indeed a CSV
                 if (!file.name.endsWith('.csv')) {
                     showMessage('Por favor, selecciona un archivo CSV. Puedes exportar tu Excel a CSV primero.', 'error');
+                    console.error('Error: Archivo seleccionado no es CSV.');
                     return;
                 }
+                console.log('Archivo CSV seleccionado:', file.name);
+
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
                         const csvContent = e.target.result;
-                        const rows = csvContent.split('\n').map(row => row.trim()).filter(row => row !== ''); // Filter out empty lines
+                        const rows = csvContent.split('\n').map(row => row.trim()).filter(row => row !== '');
                         
                         let loadedGrade = null;
                         let loadedNumRows = null;
                         let loadedNumCols = null;
                         let dataStartIndex = 0;
 
-                        // Parse metadata from the first few lines
+                        // Analizar la información del encabezado
                         for (let i = 0; i < rows.length; i++) {
                             const row = rows[i];
                             if (row.startsWith('Grado:')) {
                                 loadedGrade = row.split(':')[1].trim();
+                                console.log('CSV Header - Grado:', loadedGrade);
                             } else if (row.startsWith('Total Filas:')) {
                                 loadedNumRows = parseInt(row.split(':')[1].trim());
+                                console.log('CSV Header - Total Filas:', loadedNumRows);
                             } else if (row.startsWith('Total Columnas:')) {
                                 loadedNumCols = parseInt(row.split(':')[1].trim());
+                                console.log('CSV Header - Total Columnas:', loadedNumCols);
                             } else if (row.toLowerCase().includes('numero,nombre del estudiante')) {
-                                dataStartIndex = i + 1; // Data starts after the header
-                                break; // Stop looking for metadata/header
+                                dataStartIndex = i + 1; // Los datos comienzan después de este encabezado
+                                console.log('CSV Data Start Index:', dataStartIndex);
+                                break;
                             }
                         }
                         
                         const studentNames = [];
                         for (let i = dataStartIndex; i < rows.length; i++) {
-                            // Simple CSV parsing: split by comma, ignoring number, and unescape quotes
-                            const parts = rows[i].split(',');
-                            let studentName = parts.slice(1).join(',').trim(); // Take everything after the first comma
-                            
-                            if (studentName.startsWith('"') && studentName.endsWith('"')) {
-                                studentName = studentName.slice(1, -1).replace(/""/g, '"'); // Unescape quotes
+                            const row = rows[i];
+                            let parts = [];
+                            let inQuote = false;
+                            let currentPart = '';
+                            // Análisis manual de CSV para manejar comas dentro de cadenas entrecomilladas
+                            for (let char of row) {
+                                if (char === '"') {
+                                    inQuote = !inQuote;
+                                } else if (char === ',' && !inQuote) {
+                                    parts.push(currentPart);
+                                    currentPart = '';
+                                } else {
+                                    currentPart += char;
+                                }
                             }
-                            
-                            if (studentName) {
-                                studentNames.push(studentName);
-                            }
-                        }
+                            parts.push(currentPart); // Añadir la última parte
 
-                        if (studentNames.length === 0) {
-                            showMessage('No se encontraron estudiantes en el archivo CSV. Asegúrate de que el formato sea "Numero,Nombre del Estudiante".', 'error');
-                            return;
+                            let studentName = parts.slice(1).join(',').trim(); // Unir las partes después del número
+                            
+                            // Eliminar comillas circundantes y escapar comillas dobles si están presentes
+                            if (studentName.startsWith('"') && studentName.endsWith('"')) {
+                                studentName = studentName.slice(1, -1).replace(/""/g, '"');
+                            }
+                            studentNames.push(studentName);
                         }
-                        
-                        // Apply loaded metadata or calculate defaults
+                        console.log('Nombres de estudiantes cargados desde CSV:', studentNames);
+
+
+                        // Actualizar los campos de entrada y crear el diseño
                         if (loadedGrade) {
                             gradeSelect.value = loadedGrade;
-                        } else {
-                            // If grade not found in CSV, try to load existing layout for current selected grade
-                            // No need to show error, just use current selection
                         }
-
-                        if (!isNaN(loadedNumRows) && loadedNumRows > 0) {
+                        if (loadedNumRows) {
                             numRowsInput.value = loadedNumRows;
-                        } else {
-                            // Fallback if rows not in CSV or invalid
-                            numRowsInput.value = Math.ceil(studentNames.length / parseInt(numColsInput.value || 6)); // Use existing cols or default
                         }
-
-                        if (!isNaN(loadedNumCols) && loadedNumCols > 0) {
+                        if (loadedNumCols) {
                             numColsInput.value = loadedNumCols;
-                        } else {
-                            // Fallback if columns not in CSV or invalid
-                            numColsInput.value = Math.ceil(studentNames.length / parseInt(numRowsInput.value || 5)); // Use existing rows or default
                         }
 
-                        // Create the layout and populate the seats
-                        createLayoutBtn.click();
+                        // Activar la creación del diseño para asegurar que la cuadrícula coincida con las dimensiones del CSV
+                        createLayoutBtn.click(); // This will also call showMessage
+
+                        // Rellenar los asientos con los nombres de los estudiantes cargados
                         const seatInputs = document.querySelectorAll('.seat-input');
                         studentNames.forEach((name, index) => {
                             if (seatInputs[index]) {
                                 seatInputs[index].value = name;
                             }
                         });
-                        
-                        showMessage(`Se cargaron ${studentNames.length} estudiantes desde el archivo CSV.`, 'success');
+                        showMessage('Archivo CSV cargado y distribución de aula actualizada con éxito.', 'success');
+                        console.log('Distribución de aula actualizada desde CSV.');
+
 
                     } catch (error) {
                         console.error('Error al procesar el archivo CSV:', error);
-                        showMessage('Error al procesar el archivo. Asegúrate de que el formato sea correcto y que las filas/columnas sean números válidos.', 'error');
+                        showMessage('Error al leer el archivo CSV. Asegúrate de que el formato sea correcto y que el archivo esté bien codificado. Detalles: ' + error.message, 'error');
                     }
                 };
-
-                reader.onerror = () => {
-                    showMessage('No se pudo leer el archivo. Inténtalo de nuevo.', 'error');
-                };
-
                 reader.readAsText(file);
             });
         });
