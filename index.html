@@ -35,6 +35,8 @@
         }
         .input-group input[type="number"],
         .input-group input[type="file"],
+        .input-group input[type="email"], /* Added for email input */
+        .input-group input[type="password"], /* Added for password input */
         .input-group select { /* Added select for styling */
             width: 100%;
             padding: 0.75rem 1rem; /* py-3 px-4 */
@@ -47,6 +49,8 @@
         }
         .input-group input[type="number"]:focus,
         .input-group input[type="file"]:focus,
+        .input-group input[type="email"]:focus, /* Added for email input */
+        .input-group input[type="password"]:focus, /* Added for password input */
         .input-group select:focus { /* Added select for styling */
             outline: none;
             border-color: #6366f1; /* indigo-500 */
@@ -66,6 +70,31 @@
         .button-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); /* Slightly larger shadow on hover */
+        }
+        .button-primary:disabled {
+            background-image: none;
+            background-color: #cbd5e1; /* slate-300 */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .button-primary:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .button-secondary { /* New style for secondary buttons like logout */
+            background-color: #e2e8f0; /* slate-200 */
+            color: #334155; /* slate-700 */
+            font-weight: 700; /* font-bold */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .button-secondary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .grid-container {
             display: grid;
@@ -99,7 +128,7 @@
             height: 100%;
             border: none;
             background-color: transparent;
-            text-align: center;
+            text-align: center; /* Centrar texto en los inputs */
             font-size: 0.9rem;
             font-weight: 500;
             color: #4338ca;
@@ -126,12 +155,22 @@
             float: right;
             cursor: pointer;
         }
-        .user-id-display, .last-update-display {
+        .message-box.info {
+            background-color: #d1fae5; /* green-100 */
+            border-color: #34d399; /* green-400 */
+            color: #065f46; /* green-800 */
+        }
+        .message-box.success {
+            background-color: #d1fae5; /* green-100 */
+            border-color: #34d399; /* green-400 */
+            color: #065f46; /* green-800 */
+        }
+        .user-info-display { /* Combined display for user info */
             font-size: 0.8rem;
             color: #64748b; /* slate-500 */
             text-align: center;
-            margin-top: 0.5rem; /* Reduced margin to keep them close */
-            word-break: break-all; /* Ensures long IDs wrap */
+            margin-top: 0.5rem;
+            word-break: break-all;
         }
         .board {
             background-color: #334155; /* slate-700 */
@@ -160,80 +199,109 @@
             <span id="messageText"></span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="grid grid-cols-1 gap-6">
+        <!-- Sección de Autenticación (visible por defecto) -->
+        <div id="authSection" class="bg-indigo-50 p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-2xl font-bold text-center text-indigo-800 mb-6" id="authTitle">Iniciar Sesión</h2>
+            <div class="grid grid-cols-1 gap-4">
                 <div class="input-group">
-                    <label for="numRows">Número de Filas:</label>
-                    <input type="number" id="numRows" value="5" min="1">
+                    <label for="emailInput">Correo Electrónico:</label>
+                    <input type="email" id="emailInput" placeholder="tu@ejemplo.com">
                 </div>
                 <div class="input-group">
-                    <label for="numCols">Número de Columnas:</label>
-                    <input type="number" id="numCols" value="6" min="1">
+                    <label for="passwordInput">Contraseña:</label>
+                    <input type="password" id="passwordInput" placeholder="••••••••">
                 </div>
-                <!-- New Grade Selection -->
-                <div class="input-group">
-                    <label for="gradeSelect">Seleccionar Grado:</label>
-                    <select id="gradeSelect">
-                        <option value="601">Grado 601</option>
-                        <option value="602">Grado 602</option>
-                        <option value="603">Grado 603</option>
-                        <option value="604">Grado 604</option>
-                        <option value="701">Grado 701</option>
-                        <option value="702">Grado 702</option>
-                        <option value="703">Grado 703</option>
-                        <option value="704">Grado 704</option>
-                        <option value="801">Grado 801</option>
-                        <option value="802">Grado 802</option>
-                        <option value="803">Grado 803</option>
-                        <option value="901">Grado 901</option>
-                        <option value="902">Grado 902</option>
-                        <option value="903">Grado 903</option>
-                        <option value="1001">Grado 1001</option>
-                        <option value="1002">Grado 1002</option>
-                        <option value="1101">Grado 1101</option>
-                        <option value="1102">Grado 1102</option>
-                    </select>
-                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+                <button id="loginBtn" class="button-primary">Iniciar Sesión</button>
+                <button id="registerBtn" class="button-secondary">Registrarse</button>
+                <button id="guestLoginBtn" class="button-secondary">Continuar como Invitado</button>
             </div>
         </div>
 
-        <!-- Board element added here -->
-        <div class="board" id="classroomBoard">
-            TABLERO
-        </div>
+        <!-- Sección de la Aplicación Principal (oculta por defecto, visible solo si está autenticado) -->
+        <div id="appSection" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div id="userInfo" class="text-sm text-slate-600"></div>
+                <button id="logoutBtn" class="button-secondary">Cerrar Sesión</button>
+            </div>
 
-        <div id="classroomDiagram" class="grid-container">
-            <p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>
-        </div>
-        
-        <!-- Buttons moved to below the diagram -->
-        <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-8">
-            <button id="createLayoutBtn" class="button-primary">Crear Esquema de Aula</button>
-            <button id="saveLayoutBtn" class="button-primary">Guardar Distribución</button>
-            <button id="exportPdfBtn" class="button-primary">Exportar a PDF</button>
-            <button id="exportExcelBtn" class="button-primary">Exportar a Excel (CSV)</button>
-        </div>
-        <div class="input-group mt-6">
-            <label for="csvFile">Cargar desde archivo CSV (Exporta tu Excel a CSV primero):</label>
-            <input type="file" id="csvFile" accept=".csv">
-            <button id="loadCsvBtn" class="button-primary mt-4">Cargar desde CSV</button>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="input-group">
+                        <label for="numRows">Número de Filas:</label>
+                        <input type="number" id="numRows" value="5" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="numCols">Número de Columnas:</label>
+                        <input type="number" id="numCols" value="6" min="1">
+                    </div>
+                    <!-- New Grade Selection -->
+                    <div class="input-group">
+                        <label for="gradeSelect">Seleccionar Grado:</label>
+                        <select id="gradeSelect">
+                            <option value="601">Grado 601</option>
+                            <option value="602">Grado 602</option>
+                            <option value="603">Grado 603</option>
+                            <option value="604">Grado 604</option>
+                            <option value="701">Grado 701</option>
+                            <option value="702">Grado 702</option>
+                            <option value="703">Grado 703</option>
+                            <option value="704">Grado 704</option>
+                            <option value="801">Grado 801</option>
+                            <option value="802">Grado 802</option>
+                            <option value="803">Grado 803</option>
+                            <option value="901">Grado 901</option>
+                            <option value="902">Grado 902</option>
+                            <option value="903">Grado 903</option>
+                            <option value="1001">Grado 1001</option>
+                            <option value="1002">Grado 1002</option>
+                            <option value="1101">Grado 1101</option>
+                            <option value="1102">Grado 1102</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-        <div id="userIdDisplay" class="user-id-display"></div>
-        <div id="lastUpdateDisplay" class="last-update-display"></div> <!-- Elemento para la fecha y usuario de última actualización -->
+            <!-- Board element added here -->
+            <div class="board" id="classroomBoard">
+                TABLERO
+            </div>
+
+            <div id="classroomDiagram" class="grid-container">
+                <p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>
+            </div>
+            
+            <!-- Buttons moved to below the diagram -->
+            <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-8">
+                <button id="createLayoutBtn" class="button-primary">Crear Esquema de Aula</button>
+                <button id="saveLayoutBtn" class="button-primary">Guardar Distribución</button>
+                <button id="exportPdfBtn" class="button-primary">Exportar a PDF</button>
+                <button id="exportExcelBtn" class="button-primary">Exportar a Excel (CSV)</button>
+            </div>
+            <div class="input-group mt-6">
+                <label for="csvFile">Cargar desde archivo CSV (Exporta tu Excel a CSV primero):</label>
+                <input type="file" id="csvFile" accept=".csv">
+                <button id="loadCsvBtn" class="button-primary mt-4">Cargar desde CSV</button>
+            </div>
+
+            <div id="userInfoDisplay" class="user-info-display"></div>
+            <div id="lastUpdateDisplay" class="user-info-display"></div>
+        </div>
     </div>
 
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, 
+                 createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Variables globales para la configuración de Firebase y el ID de la aplicación.
-        // IMPORTANTE: NO modifiques estas variables directamente. El entorno de Canvas
-        // las inyectará automáticamente cuando la aplicación se ejecute en él.
-        // Si ejecutas este código localmente (fuera del entorno de Canvas), se usará
-        // tu configuración de Firebase predeterminada como respaldo.
+        // Global variables for Firebase configuration and app ID.
+        // IMPORTANT: DO NOT modify these variables directly. The Canvas environment
+        // will automatically inject them when the app runs in it.
+        // If you run this code locally (outside the Canvas environment), it will use
+        // your default Firebase configuration as a fallback.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDf3r2W8GXIxLejU7l8T-AKmfWFwBXB_cs",
             authDomain: "appclases-32445.firebaseapp.com",
@@ -243,20 +311,41 @@
             appId: "1:356977293092:web:c5f6943246f00f3baca5b1"
         };
         
-        // __app_id se proporciona por el entorno de Canvas. Usamos projectId de firebaseConfig como respaldo.
+        // __app_id is provided by the Canvas environment. We use firebaseConfig.projectId as a fallback.
         const appIdForFirestore = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
         
-        // __initial_auth_token se proporciona por el entorno de Canvas. Usamos null como respaldo.
+        // __initial_auth_token is provided by the Canvas environment. We use null as a fallback.
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db;
         let auth;
         let userId = null;
+        let userEmail = null; // Stores the user's email
         let isAuthReady = false;
+
+        // --- List of authorized user IDs to save layouts ---
+        // IMPORTANT: You must replace 'YOUR_ADMIN_USER_ID_HERE' with the actual IDs of the users
+        // you want to have permission to save. You can add multiple IDs to the array.
+        // Once you register and log in for the first time, you will see your user ID in the console
+        // or in the 'userInfoDisplay' field.
+        const adminUserIds = ['siFG77CWCKeOshpGGNR9TdtjbmI3','yKFq7aCwj1VOVqj0vBEZ9pQbHpl1']; // <<-- UPDATE THIS!
 
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("DOM content loaded. Starting app initialization and element fetching.");
 
+            // Autenticación UI elements
+            const authSection = document.getElementById('authSection');
+            const authTitle = document.getElementById('authTitle');
+            const emailInput = document.getElementById('emailInput');
+            const passwordInput = document.getElementById('passwordInput');
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const guestLoginBtn = document.getElementById('guestLoginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.getElementById('userInfo'); // To display "Hola, [Email/Invitado]"
+
+            // Main App UI elements
+            const appSection = document.getElementById('appSection');
             const numRowsInput = document.getElementById('numRows');
             const numColsInput = document.getElementById('numCols');
             const gradeSelect = document.getElementById('gradeSelect');
@@ -269,112 +358,171 @@
             const classroomDiagramDiv = document.getElementById('classroomDiagram');
             const messageBox = document.getElementById('messageBox');
             const messageText = document.getElementById('messageText');
-            const userIdDisplay = document.getElementById('userIdDisplay');
+            const userInfoDisplay = document.getElementById('userInfoDisplay'); // Previously userIdDisplay
             const classroomBoard = document.getElementById('classroomBoard');
             const lastUpdateDisplay = document.getElementById('lastUpdateDisplay');
 
-            // --- Verificación de elementos DOM ---
+            // --- DOM element verification (adjusted for new elements) ---
             const elementsToCheck = {
-                'numRowsInput': numRowsInput,
-                'numColsInput': numColsInput,
-                'gradeSelect': gradeSelect,
-                'createLayoutBtn': createLayoutBtn,
-                'saveLayoutBtn': saveLayoutBtn,
-                'exportPdfBtn': exportPdfBtn,
-                'exportExcelBtn': exportExcelBtn,
-                'csvFileInput': csvFileInput,
-                'loadCsvBtn': loadCsvBtn,
-                'classroomDiagramDiv': classroomDiagramDiv,
-                'messageBox': messageBox,
-                'messageText': messageText,
-                'userIdDisplay': userIdDisplay,
-                'classroomBoard': classroomBoard,
-                'lastUpdateDisplay': lastUpdateDisplay
+                'authSection': authSection, 'authTitle': authTitle, 'emailInput': emailInput,
+                'passwordInput': passwordInput, 'loginBtn': loginBtn, 'registerBtn': registerBtn,
+                'guestLoginBtn': guestLoginBtn, 'logoutBtn': logoutBtn, 'userInfo': userInfo,
+                'appSection': appSection, 'numRowsInput': numRowsInput, 'numColsInput': numColsInput,
+                'gradeSelect': gradeSelect, 'createLayoutBtn': createLayoutBtn, 'saveLayoutBtn': saveLayoutBtn,
+                'exportPdfBtn': exportPdfBtn, 'exportExcelBtn': exportExcelBtn, 'csvFileInput': csvFileInput,
+                'loadCsvBtn': loadCsvBtn, 'classroomDiagramDiv': classroomDiagramDiv, 'messageBox': messageBox,
+                'messageText': messageText, 'userInfoDisplay': userInfoDisplay,
+                'classroomBoard': classroomBoard, 'lastUpdateDisplay': lastUpdateDisplay
             };
 
             for (const id in elementsToCheck) {
                 if (!elementsToCheck[id]) {
-                    console.error(`Error crítico: El elemento DOM con ID '${id}' no se encontró. Los botones pueden no funcionar.`);
-                    showMessage(`Error: El elemento de la interfaz con ID '${id}' no se encontró. La aplicación podría no funcionar correctamente. Revisa el código HTML.`, 'error');
+                    console.error(`Critical error: DOM element with ID '${id}' not found. The application may not work.`);
+                    showMessage(`Error: The UI element with ID '${id}' was not found. The application might not work correctly. Check the HTML code.`, 'error');
                 } else {
-                    console.log(`Elemento DOM con ID '${id}' encontrado.`);
+                    console.log(`DOM element with ID '${id}' found.`);
                 }
             }
-            // --- Fin de la verificación de elementos DOM ---
+            // --- End of DOM element verification ---
 
 
             /**
-             * Muestra un mensaje en la caja de mensajes personalizada.
-             * @param {string} message - El mensaje a mostrar.
-             * @param {'error'|'info'|'success'} type - El tipo de mensaje para determinar el estilo.
+             * Displays a message in the custom message box.
+             * @param {string} message - The message to display.
+             * @param {'error'|'info'|'success'} type - The message type to determine the style.
              */
             function showMessage(message, type = 'error') {
                 messageText.textContent = message;
-                messageBox.className = 'message-box show'; // Reiniciar clases y mostrar
-                if (type === 'error') {
-                    messageBox.style.backgroundColor = '#fee2e2'; // red-100
-                    messageBox.style.borderColor = '#ef4444'; // red-500
-                    messageBox.style.color = '#dc2626'; // red-600
-                } else if (type === 'info') {
-                    messageBox.style.backgroundColor = '#d1fae5'; // green-100
-                    messageBox.style.borderColor = '#34d399'; // green-400
-                    messageBox.style.color = '#065f46'; // green-800
-                } else if (type === 'success') {
-                    messageBox.style.backgroundColor = '#d1fae5'; /* green-100 */
-                    messageBox.style.borderColor = '#34d399'; /* green-400 */
-                    messageBox.style.color = '#065f46'; /* green-800 */
+                messageBox.className = 'message-box show ' + type; // Reset classes and show
+            }
+
+            // --- Authentication Functions ---
+            async function handleLogin() {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                if (!email || !password) {
+                    showMessage('Por favor, ingresa correo y contraseña para iniciar sesión.', 'error');
+                    return;
+                }
+                try {
+                    console.log('Attempting signInWithEmailAndPassword...');
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showMessage('¡Sesión iniciada con éxito!', 'success');
+                } catch (error) {
+                    console.error("Error al iniciar sesión:", error);
+                    showMessage(`Error al iniciar sesión: ${error.message}`, 'error');
                 }
             }
 
-            // --- Inicialización y Autenticación de Firebase ---
+            async function handleRegister() {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                if (!email || !password) {
+                    showMessage('Por favor, ingresa correo y contraseña para registrarte.', 'error');
+                    return;
+                }
+                try {
+                    console.log('Attempting createUserWithEmailAndPassword...');
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showMessage('¡Registro exitoso e inicio de sesión automático!', 'success');
+                } catch (error) {
+                    console.error("Error al registrarse:", error);
+                    showMessage(`Error al registrarse: ${error.message}`, 'error');
+                }
+            }
+
+            async function handleGuestLogin() {
+                try {
+                    console.log('Attempting signInAnonymously...');
+                    await signInAnonymously(auth);
+                    showMessage('¡Has iniciado sesión como invitado!', 'info');
+                } catch (error) {
+                    console.error("Error al iniciar sesión como invitado:", error);
+                    showMessage(`Error al iniciar sesión como invitado: ${error.message}`, 'error');
+                }
+            }
+
+            async function handleLogout() {
+                try {
+                    console.log('Attempting signOut...');
+                    await signOut(auth);
+                    showMessage('¡Sesión cerrada con éxito!', 'info');
+                } catch (error) {
+                    console.error("Error al cerrar sesión:", error);
+                    showMessage(`Error al cerrar sesión: ${error.message}`, 'error');
+                }
+            }
+
+            // --- Firebase Initialization and Authentication ---
             try {
-                // Inicializar la aplicación de Firebase
                 const app = initializeApp(firebaseConfig);
-                
-                // Obtener instancias de Auth y Firestore
                 auth = getAuth(app);
                 db = getFirestore(app);
 
                 console.log('Firebase App initialized with config:', firebaseConfig);
-                console.log('Auth service instance obtained:', auth);
-                if (auth && auth.app && auth.app.options) {
-                    console.log('Auth service options (from app config):', auth.app.options);
-                } else {
-                    console.warn('Auth service or its app options not immediately available after getAuth.');
+                
+                // Force sign out on app load to ensure login screen appears every time
+                // This ensures that even if Firebase persists a session, we immediately clear it.
+                if (auth.currentUser) { 
+                    console.log('User found on load, forcing sign out...');
+                    await signOut(auth); 
                 }
 
-                // Iniciar sesión con token personalizado o de forma anónima si no se proporciona token
-                if (initialAuthToken) {
-                    console.log('Attempting signInWithCustomToken...');
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    console.log('Attempting signInAnonymously...');
-                    await signInAnonymously(auth);
-                }
-                console.log('Authentication attempt completed.');
 
-
-                // Escuchar los cambios en el estado de autenticación
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
-                        userIdDisplay.textContent = `Tu ID de usuario: ${userId}`;
+                        userEmail = user.email || 'Invitado'; // If no email, it's anonymous
                         isAuthReady = true;
-                        console.log('User authenticated. UID:', userId);
-                        // Cargar el diseño una vez autenticado
-                        loadLayoutForSelectedGrade();
+                        
+                        authSection.classList.add('hidden'); // Hide authentication section
+                        appSection.classList.remove('hidden'); // Show app section
+                        
+                        userInfo.textContent = `Hola, ${userEmail} (ID: ${userId})`;
+                        userInfoDisplay.textContent = `Tu ID de usuario: ${userId}`; // For the footer
+
+                        console.log('User authenticated. UID:', userId, 'Email:', userEmail);
+                        
+                        // Control visibility/state of modification buttons
+                        updateModificationButtonsState();
+
+                        loadLayoutForSelectedGrade(); // Load layout once authenticated
                     } else {
                         userId = null;
-                        userIdDisplay.textContent = 'No autenticado.';
+                        userEmail = null;
                         isAuthReady = false;
+                        
+                        authSection.classList.remove('hidden'); // Show authentication section
+                        appSection.classList.add('hidden'); // Hide app section
+                        userInfo.textContent = '';
+                        userInfoDisplay.textContent = 'No autenticado.';
+                        lastUpdateDisplay.textContent = '';
+                        
                         console.log('User not authenticated.');
+                        updateModificationButtonsState(); // Update buttons when logged out
                     }
                 });
+
+                // Add event listener for window closing to sign out
+                window.addEventListener('beforeunload', async (event) => {
+                    if (auth.currentUser) {
+                        console.log('App window is closing, signing out user.');
+                        try {
+                            // Using a synchronous approach for signOut during beforeunload as async might not complete reliably
+                            // However, signOut is typically fast enough that await often works.
+                            // For critical sync operations, a blocking call might be considered, but generally avoided.
+                            await signOut(auth); 
+                        } catch (error) {
+                            console.error('Error signing out during beforeunload:', error);
+                        }
+                    }
+                });
+
 
             } catch (error) {
                 console.error("Error al inicializar Firebase o autenticar:", error);
                 if (error.code === 'auth/configuration-not-found') {
-                    showMessage("Error de Firebase: La configuración de autenticación no se encontró. Esto **NO es un error de código**, es un problema en la **configuración de tu proyecto en la Consola de Firebase**. Por favor, asegúrate de que el método de inicio de sesión **'Anónimo' esté HABILITADO** en la sección 'Authentication' de tu proyecto.", 'error');
+                    showMessage("Error de Firebase: La configuración de autenticación no se encontró. Esto **NO es un error de código**, es un problema en la **configuración de tu proyecto en la Consola de Firebase**. Por favor, asegúrate de que el método de inicio de sesión **'Anónimo' y 'Correo electrónico/contraseña' estén HABILITADOS** en la sección 'Authentication' de tu proyecto.", 'error');
                 } else if (error.code === 'auth/network-request-failed') {
                     showMessage("Error de Firebase: Falló la conexión de red. Por favor, verifica tu conexión a Internet.", 'error');
                 } else {
@@ -382,27 +530,81 @@
                 }
             }
 
-            // Listener de evento para el cambio de selección de grado
+            // --- Assign Event Listeners to new authentication buttons ---
+            loginBtn.addEventListener('click', handleLogin);
+            registerBtn.addEventListener('click', handleRegister);
+            guestLoginBtn.addEventListener('click', handleGuestLogin);
+            logoutBtn.addEventListener('click', handleLogout);
+
+            // Event listener for grade selection change
             gradeSelect.addEventListener('change', loadLayoutForSelectedGrade);
 
             /**
-             * Obtiene la referencia del documento de Firestore para el diseño de un grado específico.
-             * Utiliza la ruta de datos públicos para el acceso colaborativo.
-             * @param {string} gradeId - El ID del grado (ej. "601").
-             * @returns {DocumentReference} - La referencia del documento de Firestore.
+             * Gets the Firestore document reference for the layout of a specific grade.
+             * Uses the public data path for collaborative access.
+             * @param {string} gradeId - The grade ID (e.g., "601").
+             * @returns {DocumentReference} - The Firestore document reference.
              */
             function getGradeLayoutDocRef(gradeId) {
-                // IMPORTANTE: Usando `appIdForFirestore` y colección pública para datos compartidos
+                // IMPORTANT: Using `appIdForFirestore` and public collection for shared data
                 const path = `artifacts/${appIdForFirestore}/public/data/grades/${gradeId}`;
                 console.log('Firestore Path for Grade:', path);
                 return doc(db, path);
             }
 
             /**
-             * Crea la cuadrícula del diseño del aula basándose en la entrada del usuario para filas y columnas.
+             * Checks if the current user is authorized (i.e., if their userId is in adminUserIds).
+             * @returns {boolean} - True if the user is authorized, False otherwise.
+             */
+            function isUserAuthorized() {
+                return userId && adminUserIds.includes(userId);
+            }
+
+            /**
+             * Updates the state of modification buttons (create, save)
+             * based on whether the user is authenticated and is an administrator.
+             */
+            function updateModificationButtonsState() {
+                const authorized = isUserAuthorized();
+                createLayoutBtn.disabled = !authorized;
+                saveLayoutBtn.disabled = !authorized;
+                csvFileInput.disabled = !authorized; // Also disable CSV upload
+                loadCsvBtn.disabled = !authorized; // and the CSV upload button
+
+                if (!authorized) {
+                    if (userId) { // If the user is logged in but not admin
+                        createLayoutBtn.title = "Solo los usuarios autorizados pueden crear diseños.";
+                        saveLayoutBtn.title = "Solo los usuarios autorizados pueden guardar distribuciones.";
+                        csvFileInput.title = "Solo los usuarios autorizados pueden cargar CSV.";
+                        loadCsvBtn.title = "Solo los usuarios autorizados pueden cargar CSV.";
+                    } else { // If no user logged in
+                        createLayoutBtn.title = "Inicia sesión como administrador para crear diseños.";
+                        saveLayoutBtn.title = "Inicia sesión como administrador para guardar distribuciones.";
+                        csvFileInput.title = "Inicia sesión como administrador para cargar CSV.";
+                        loadCsvBtn.title = "Inicia sesión como administrador para cargar CSV.";
+                    }
+                } else {
+                    createLayoutBtn.title = ""; // Clear title if authorized
+                    saveLayoutBtn.title = "";
+                    csvFileInput.title = "";
+                    loadCsvBtn.title = "";
+                }
+            }
+
+
+            /**
+             * Creates the classroom layout grid based on user input for rows and columns.
              */
             createLayoutBtn.addEventListener('click', () => {
                 console.log("Botón 'Crear Esquema de Aula' clicado!");
+                if (!isAuthReady) {
+                    showMessage('La autenticación no está lista. Por favor, espera o inicia sesión.', 'error');
+                    return;
+                }
+                if (!isUserAuthorized()) {
+                    showMessage('No tienes permiso para crear una distribución. Solo usuarios autorizados pueden realizar cambios.', 'error');
+                    return;
+                }
                 const numRows = parseInt(numRowsInput.value);
                 const numCols = parseInt(numColsInput.value);
 
@@ -422,417 +624,416 @@
                 const totalSeats = numRows * numCols;
 
                 classroomDiagramDiv.innerHTML = '';
+                // Set grid template columns based on numCols, allowing for responsive behavior
                 classroomDiagramDiv.style.gridTemplateColumns = `repeat(${numCols}, minmax(100px, 1fr))`;
 
                 for (let i = 0; i < totalSeats; i++) {
                     const seatDiv = document.createElement('div');
                     seatDiv.classList.add('seat');
-                    
+                    seatDiv.dataset.row = Math.floor(i / numCols);
+                    seatDiv.dataset.col = i % numCols;
+
                     const seatInput = document.createElement('input');
                     seatInput.type = 'text';
                     seatInput.classList.add('seat-input');
                     seatInput.placeholder = `Estudiante ${i + 1}`;
-                    seatDiv.appendChild(seatInput);
+                    seatInput.value = ''; // Initialize with empty string
 
+                    // Add event listener to save data on input change
+                    seatInput.addEventListener('change', () => {
+                        console.log(`Asiento [${seatDiv.dataset.row}, ${seatDiv.dataset.col}] cambiado a: ${seatInput.value}`);
+                    });
+
+                    seatDiv.appendChild(seatInput);
                     classroomDiagramDiv.appendChild(seatDiv);
                 }
-
-                classroomBoard.style.display = 'block'; // Mostrar el tablero cuando se crea el diseño
-                showMessage('¡Listo! Ahora puedes escribir el nombre de cada estudiante en su pupitre.', 'info');
-                lastUpdateDisplay.textContent = 'Distribución creada (no guardada aún).'; // Clear on new layout creation
+                showMessage('Esquema de aula creado. Ahora puedes ingresar los nombres de los estudiantes.', 'info');
             });
 
             /**
-             * Guarda el diseño actual del aula en Firestore para el grado seleccionado.
+             * Saves the current classroom layout to Firestore for the selected grade.
              */
             saveLayoutBtn.addEventListener('click', async () => {
                 console.log("Botón 'Guardar Distribución' clicado!");
-                if (!isAuthReady || !userId) {
-                    showMessage('Autenticación no lista. Por favor, espera o recarga la página.', 'error');
-                    console.warn('Advertencia: Intento de guardar fallido, autenticación no lista o ID de usuario ausente.');
+                if (!isAuthReady) {
+                    showMessage('La autenticación no está lista. Por favor, espera o inicia sesión.', 'error');
                     return;
                 }
-                console.log('Autenticación lista. Procediendo a guardar.');
-
-
-                const selectedGrade = gradeSelect.value;
-                if (!selectedGrade) {
-                    showMessage('Por favor, selecciona un grado para guardar la distribución.', 'error');
+                if (!isUserAuthorized()) {
+                    showMessage('No tienes permiso para guardar la distribución. Solo usuarios autorizados pueden realizar cambios.', 'error');
                     return;
                 }
 
-                const seatInputs = document.querySelectorAll('.seat-input');
-                if (seatInputs.length === 0) {
-                    showMessage(`No hay un esquema de aula para guardar en ${selectedGrade}. ¡Crea uno primero!`, 'info');
-                    return;
-                }
-
+                const gradeId = gradeSelect.value;
+                const seats = Array.from(classroomDiagramDiv.querySelectorAll('.seat-input')).map(input => input.value);
                 const numRows = parseInt(numRowsInput.value);
                 const numCols = parseInt(numColsInput.value);
-                const seatsData = Array.from(seatInputs).map(input => input.value.trim());
 
-                const currentTimestamp = new Date();
-                const layoutData = {
-                    numRows: numRows,
-                    numCols: numCols,
-                    seats: seatsData,
-                    timestamp: currentTimestamp.toISOString(), // Almacenar como cadena ISO
-                    lastUpdatedBy: userId // Guardar el ID del usuario que realizó la última actualización
-                };
+                if (seats.length === 0) {
+                    showMessage('No hay asientos en el esquema para guardar.', 'error');
+                    return;
+                }
 
                 try {
-                    const layoutDocRef = getGradeLayoutDocRef(selectedGrade);
-                    console.log('Intentando guardar en la ruta de Firestore:', layoutDocRef.path);
-                    await setDoc(layoutDocRef, layoutData);
-                    showMessage(`¡Distribución de aula guardada con éxito para ${selectedGrade}!`, 'success');
-                    lastUpdateDisplay.textContent = `Última actualización: ${currentTimestamp.toLocaleString('es-ES')} por ${userId}`; // Actualizar la fecha y el usuario
+                    const layoutData = {
+                        numRows: numRows,
+                        numCols: numCols,
+                        seats: seats,
+                        lastUpdated: new Date(),
+                        updatedBy: userEmail || 'Anónimo',
+                        updatedById: userId
+                    };
+                    const docRef = getGradeLayoutDocRef(gradeId);
+                    await setDoc(docRef, layoutData, { merge: true }); // Use merge to avoid overwriting other fields if any
+                    showMessage(`¡Distribución del grado ${gradeId} guardada con éxito!`, 'success');
+                    console.log('Distribución guardada:', layoutData);
+                    displayLastUpdate(layoutData.lastUpdated, layoutData.updatedBy, layoutData.updatedById);
                 } catch (error) {
                     console.error("Error al guardar la distribución:", error);
-                    showMessage('Error al guardar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de escritura para la ruta `artifacts/{projectId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
+                    showMessage(`Error al guardar la distribución: ${error.message}`, 'error');
                 }
             });
 
             /**
-             * Carga el diseño del aula para el grado actualmente seleccionado desde Firestore.
+             * Loads the classroom layout for the currently selected grade from Firestore.
              */
             async function loadLayoutForSelectedGrade() {
-                console.log("Función loadLayoutForSelectedGrade llamada.");
-                if (!isAuthReady || !userId) {
-                    console.log('Carga omitida: Autenticación no lista o userId es nulo.');
+                console.log("Cargando distribución para el grado seleccionado...");
+                if (!isAuthReady) {
+                    console.log('La autenticación no está lista para cargar la distribución.');
                     return;
                 }
 
-                const selectedGrade = gradeSelect.value;
-                if (!selectedGrade) {
-                    showMessage('No hay un grado seleccionado para cargar.', 'info');
-                    classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
-                    classroomBoard.style.display = 'none';
-                    lastUpdateDisplay.textContent = 'No hay distribución guardada para este grado.'; // Clear date display
-                    return;
-                }
-                console.log(`Intentando cargar el diseño para el grado: ${selectedGrade}`);
-
-
+                const gradeId = gradeSelect.value;
                 try {
-                    const layoutDocRef = getGradeLayoutDocRef(selectedGrade);
-                    console.log('Intentando cargar desde la ruta de Firestore:', layoutDocRef.path);
-                    const docSnap = await getDoc(layoutDocRef);
+                    const docRef = getGradeLayoutDocRef(gradeId);
+                    const docSnap = await getDoc(docRef);
 
                     if (docSnap.exists()) {
-                        const savedLayout = docSnap.data();
-                        numRowsInput.value = savedLayout.numRows;
-                        numColsInput.value = savedLayout.numCols;
-                        console.log('Diseño cargado:', savedLayout);
+                        const data = docSnap.data();
+                        console.log(`Distribución cargada para el grado ${gradeId}:`, data);
+                        numRowsInput.value = data.numRows;
+                        numColsInput.value = data.numCols;
+                        
+                        // Re-create the layout grid first based on loaded dimensions
+                        classroomDiagramDiv.innerHTML = '';
+                        classroomDiagramDiv.style.gridTemplateColumns = `repeat(${data.numCols}, minmax(100px, 1fr))`;
+                        const totalSeats = data.numRows * data.numCols;
 
-                        // Crear el diseño primero para asegurar que existan los inputs de los asientos
-                        createLayoutBtn.click();
+                        for (let i = 0; i < totalSeats; i++) {
+                            const seatDiv = document.createElement('div');
+                            seatDiv.classList.add('seat');
+                            seatDiv.dataset.row = Math.floor(i / data.numCols);
+                            seatDiv.dataset.col = i % data.numCols;
 
-                        const seatInputs = document.querySelectorAll('.seat-input');
-                        savedLayout.seats.forEach((studentName, index) => {
-                            if (seatInputs[index]) {
-                                seatInputs[index].value = studentName;
-                            }
-                        });
-                        classroomBoard.style.display = 'block';
-                        showMessage(`¡Distribución de aula cargada con éxito para ${selectedGrade}!`, 'success');
+                            const seatInput = document.createElement('input');
+                            seatInput.type = 'text';
+                            seatInput.classList.add('seat-input');
+                            seatInput.placeholder = `Estudiante ${i + 1}`;
+                            seatInput.value = data.seats[i] || ''; // Populate with saved data
 
-                        // Mostrar la fecha y el usuario de la última actualización
-                        let updateInfo = 'Fecha de última actualización no disponible.';
-                        if (savedLayout.timestamp) {
-                            const date = new Date(savedLayout.timestamp);
-                            updateInfo = `Última actualización: ${date.toLocaleString('es-ES')}`;
+                            seatInput.addEventListener('change', () => {
+                                console.log(`Asiento [${seatDiv.dataset.row}, ${seatDiv.dataset.col}] cambiado a: ${seatInput.value}`);
+                            });
+
+                            seatDiv.appendChild(seatInput);
+                            classroomDiagramDiv.appendChild(seatDiv);
                         }
-                        if (savedLayout.lastUpdatedBy) {
-                            updateInfo += ` por ${savedLayout.lastUpdatedBy}`;
-                        } else {
-                            if (savedLayout.timestamp) { // Only add if timestamp exists but user is missing
-                                updateInfo += ' (usuario no disponible)';
-                            }
-                        }
-                        lastUpdateDisplay.textContent = updateInfo;
-
+                        displayLastUpdate(data.lastUpdated, data.updatedBy, data.updatedById);
+                        showMessage(`Distribución del grado ${gradeId} cargada con éxito.`, 'info');
                     } else {
-                        showMessage(`No se encontró ninguna distribución de aula guardada para ${selectedGrade}.`, 'info');
-                        classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
-                        classroomBoard.style.display = 'none';
-                        lastUpdateDisplay.textContent = 'No hay distribución guardada para este grado.'; // Clear date display
+                        console.log(`No se encontró distribución guardada para el grado ${gradeId}.`);
+                        classroomDiagramDiv.innerHTML = '<p class="text-slate-500 italic text-center">No hay distribución guardada para este grado. Ingresa el número de filas y columnas, selecciona el grado, luego haz clic en "Crear Esquema de Aula" (abajo) para empezar a ubicar a tus estudiantes. El tablero está arriba de la primera fila.</p>';
+                        numRowsInput.value = 5; // Reset to default
+                        numColsInput.value = 6; // Reset to default
+                        lastUpdateDisplay.textContent = ''; // Clear update info
+                        showMessage(`No hay distribución guardada para el grado ${gradeId}.`, 'info');
                     }
                 } catch (error) {
-                    console.error(`Error al cargar la distribución para ${selectedGrade}:`, error);
-                    showMessage('Error al cargar la distribución. Esto puede deberse a la configuración de las reglas de seguridad de Firestore. Asegúrate de que los usuarios autenticados tengan permisos de lectura para la ruta `artifacts/{projectId}/public/data/grades/{gradeId}`. Por favor, inténtalo de nuevo.', 'error');
-                    lastUpdateDisplay.textContent = 'Error al cargar la fecha de actualización.'; // Show error for date
+                    console.error("Error al cargar la distribución:", error);
+                    showMessage(`Error al cargar la distribución: ${error.message}`, 'error');
                 }
             }
 
             /**
-             * Exporta el diagrama del aula actual a un documento PDF.
-             * Utiliza html2canvas para renderizar el HTML a una imagen, luego jsPDF para crear el PDF.
+             * Displays the last update information.
+             * @param {firebase.firestore.Timestamp|Date} timestamp - The timestamp of the last update.
+             * @param {string} updatedBy - The email or name of the user who last updated.
+             * @param {string} updatedById - The ID of the user who last updated.
              */
-            exportPdfBtn.addEventListener('click', async () => {
-                console.log("Botón 'Exportar a PDF' clicado!");
-                const classroomContainerForPdf = document.createElement('div');
-                classroomContainerForPdf.style.display = 'flex';
-                classroomContainerForPdf.style.flexDirection = 'column';
-                classroomContainerForPdf.style.alignItems = 'center';
-                classroomContainerForPdf.style.padding = '20px';
-                classroomContainerForPdf.style.backgroundColor = '#ffffff'; // Asegurar fondo blanco para PDF
-                classroomContainerForPdf.style.boxShadow = 'none'; // Sin sombra para PDF
-
-                // Clonar y añadir el elemento del tablero para el PDF
-                const clonedBoard = classroomBoard.cloneNode(true);
-                clonedBoard.style.display = 'block';
-                clonedBoard.style.width = '80%';
-                clonedBoard.style.maxWidth = '600px';
-                clonedBoard.style.marginBottom = '2rem';
-                classroomContainerForPdf.appendChild(clonedBoard);
-
-                const classroomDiagram = document.getElementById('classroomDiagram');
-                // Comprobar si el diagrama contiene solo el párrafo de marcador de posición inicial
-                if (classroomDiagram.children.length <= 1 && classroomDiagram.querySelector('p')) {
-                    showMessage('No hay un diagrama de aula para exportar a PDF. ¡Crea uno primero!', 'info');
+            function displayLastUpdate(timestamp, updatedBy, updatedById) {
+                let date;
+                if (timestamp && typeof timestamp.toDate === 'function') {
+                    date = timestamp.toDate();
+                } else if (timestamp instanceof Date) {
+                    date = timestamp;
+                } else {
+                    lastUpdateDisplay.textContent = '';
                     return;
                 }
 
-                // Ajustar temporalmente el estilo de los inputs y guardar los valores originales para la exportación a PDF
-                const seatInputs = document.querySelectorAll('.seat-input');
-                const originalValues = [];
-                
-                seatInputs.forEach(input => {
-                    originalValues.push(input.value);
-                    // Para PDF, queremos solo el primer nombre o el nombre completo sin estilos de input adicionales
-                    input.style.border = 'none';
-                    input.style.outline = 'none';
-                });
+                const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                const formattedDate = date.toLocaleDateString('es-ES', options);
+                lastUpdateDisplay.innerHTML = `Última actualización: ${formattedDate} por ${updatedBy} (ID: ${updatedById})`;
+            }
 
-                // Ajustar temporalmente el ancho de la cuadrícula para una mejor renderización de cuadrículas anchas en PDF
-                const originalGridWidth = classroomDiagram.style.width;
-                classroomDiagram.style.width = `${classroomDiagram.scrollWidth}px`; // Establecer ancho explícito para evitar problemas de desbordamiento
 
-                const clonedDiagram = classroomDiagram.cloneNode(true);
-                classroomContainerForPdf.appendChild(clonedDiagram);
-                document.body.appendChild(classroomContainerForPdf); // Añadir temporalmente para obtener las dimensiones correctas para html2canvas
+            /**
+             * Exports the classroom layout to a PDF file.
+             */
+            exportPdfBtn.addEventListener('click', async () => { // Made async to await style changes
+                console.log('Botón "Exportar a PDF" clicado!');
+                const diagramElement = document.getElementById('classroomDiagram');
+                const boardElement = document.getElementById('classroomBoard');
+                const mainContainer = document.querySelector('.container');
+                // const lastUpdateDisplay = document.getElementById('lastUpdateDisplay'); // Removed
+
+                if (!diagramElement || !boardElement || !mainContainer) { // Adjusted condition
+                    showMessage('Faltan elementos para generar el PDF (diagrama, tablero o contenedor principal). Asegúrate de que un esquema esté creado y cargado.', 'error');
+                    return;
+                }
+
+                // Store original styles to revert later
+                const originalDiagramOverflowX = diagramElement.style.overflowX;
+                const originalDiagramWidth = diagramElement.style.width;
+                const originalMainContainerMaxWidth = mainContainer.style.maxWidth;
+                const originalBodyOverflow = document.body.style.overflow;
+
+                // Temporarily modify styles to ensure full content is rendered for html2canvas
+                diagramElement.style.overflowX = 'visible';
+                diagramElement.style.width = `${diagramElement.scrollWidth}px`; // Use style.width to match original usage
+                mainContainer.style.maxWidth = 'none';
+                document.body.style.overflow = 'hidden';
+
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.padding = '20px';
+                tempContainer.style.background = '#ffffff';
+                tempContainer.style.boxShadow = 'none';
+                tempContainer.style.width = 'auto';
+                document.body.appendChild(tempContainer);
+
+                const clonedBoard = boardElement.cloneNode(true);
+                const clonedDiagram = diagramElement.cloneNode(true);
+
+                clonedDiagram.style.overflow = 'visible';
+                clonedDiagram.style.width = `${diagramElement.scrollWidth}px`;
+                clonedDiagram.style.minWidth = 'initial';
+
+                tempContainer.appendChild(clonedBoard);
+                tempContainer.appendChild(clonedDiagram);
 
                 try {
-                    showMessage('Generando PDF...', 'info');
-                    console.log('Iniciando html2canvas para generar la imagen del PDF.');
-                    // Renderizar todo el contenedor a un canvas
-                    const canvas = await html2canvas(classroomContainerForPdf, { scale: 2 }); // Aumentar la escala para una mejor resolución
+                    const canvas = await html2canvas(tempContainer, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        windowWidth: tempContainer.scrollWidth + 40,
+                        windowHeight: tempContainer.scrollHeight + 40
+                    });
+
                     const imgData = canvas.toDataURL('image/png');
-                    
                     const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' para retrato, 'mm' para milímetros, 'a4' para tamaño A4
+                    const pdf = new jsPDF('l', 'mm', 'a4');
+
+                    const imgProps = pdf.getImageProperties(imgData);
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
-                    const margin = 10; // Margen de 10 mm en todos los lados
-                    const contentWidth = pdfWidth - 2 * margin;
 
-                    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+                    const margin = 10;
+                    const gradeId = gradeSelect.value;
+                    const footerText = `Distribución de aula del grado - ${gradeId}`;
+                    // const lastUpdateText = lastUpdateDisplay.textContent.trim(); // Removed
 
-                    let position = margin;
-                    // Comprobar si el contenido es más alto que una sola página
-                    if (imgHeight > (pdfHeight - 2 * margin)) {
-                        for (let i = 0; i < Math.ceil(imgHeight / (pdfHeight - 2 * margin)); i++) {
-                            const newCanvas = document.createElement('canvas');
-                            const newContext = newCanvas.getContext('2d');
-                            newCanvas.width = canvas.width;
-                            newCanvas.height = Math.min(canvas.height - i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), ((pdfHeight - 2 * margin) * canvas.width / contentWidth));
-                            
-                            newContext.drawImage(canvas, 0, i * ((pdfHeight - 2 * margin) * canvas.width / contentWidth), canvas.width, newCanvas.height, 0, 0, newCanvas.width, newCanvas.height);
-                            const newImgData = newCanvas.toDataURL('image/png');
-                            
-                            if (i > 0) {
-                                pdf.addPage();
-                            }
-                            pdf.addImage(newImgData, 'PNG', margin, margin, contentWidth, (newCanvas.height * contentWidth) / newCanvas.width);
-                        }
-                    } else {
-                        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
-                    }
+                    const footerFontSize = 10;
+                    // const updateInfoFontSize = 8; // Removed
+
+                    // Estimated heights for text lines (adjust as needed for better visual fit)
+                    const footerLineHeight = 7; // mm
+                    // const updateInfoLineHeight = 5; // Removed
+                    const spacingBetweenLines = 3; // mm
+
+                    let totalBottomReservedHeight = footerLineHeight + spacingBetweenLines;
+                    // if (lastUpdateText) { // Removed
+                    //     totalBottomReservedHeight += updateInfoLineHeight;
+                    // }
+
+                    const availablePageHeightForContent_mm = pdfHeight - (2 * margin) - totalBottomReservedHeight;
+
+                    const imgDisplayWidth = pdfWidth - (2 * margin);
+                    const totalImageDisplayHeightMM = (imgProps.height * imgDisplayWidth) / imgProps.width;
+
+                    const sliceDisplayHeight_mm = Math.min(totalImageDisplayHeightMM, availablePageHeightForContent_mm);
+                    const sliceSourceHeight_px = (sliceDisplayHeight_mm * imgProps.width) / imgDisplayWidth;
+                    
+                    // Add image to the PDF
+                    pdf.addImage(
+                        imgData, 'PNG',
+                        margin,
+                        margin, // Starts from top margin
+                        imgDisplayWidth,
+                        sliceDisplayHeight_mm,
+                        null, null, null,
+                        0,
+                        0,
+                        imgProps.width,
+                        sliceSourceHeight_px
+                    );
+                    
+                    // Start Y for the main footer (always present)
+                    let currentYPositionForText = pdfHeight - margin - (footerLineHeight / 2);
+
+                    // Add main footer text
+                    pdf.setFontSize(footerFontSize);
+                    pdf.text(footerText, pdfWidth / 2, currentYPositionForText, { align: 'center' });
+
+                    // Add update info text (above the footer text), if present
+                    // if (lastUpdateText) { // Removed
+                    //     currentYPositionForText -= (footerLineHeight / 2) + spacingBetweenLines + (updateInfoLineHeight / 2);
+                    //     pdf.setFontSize(updateInfoFontSize);
+                    //     pdf.text(lastUpdateText, pdfWidth / 2, currentYPositionForText, { align: 'center' });
+                    // }
                     
                     pdf.save(`distribucion_aula_${gradeSelect.value}.pdf`);
-                    showMessage('PDF exportado con éxito.', 'success');
-                    console.log('PDF exportado correctamente.');
+                    showMessage('¡Distribución exportada a PDF!', 'success');
                 } catch (error) {
-                    console.error('Error al exportar PDF:', error);
-                    showMessage('Error al exportar el PDF. Por favor, inténtalo de nuevo.', 'error');
+                    console.error("Error al generar PDF:", error);
+                    showMessage('Error al exportar a PDF. Por favor, inténtalo de nuevo.', 'error');
                 } finally {
-                    // Restaurar el estilo original de los inputs y los valores
-                    seatInputs.forEach((input, index) => {
-                        input.value = originalValues[index];
-                        input.style.border = ''; // Eliminar estilo en línea
-                        input.style.outline = ''; // Eliminar estilo en línea
-                    });
-                    classroomDiagram.style.width = originalGridWidth; // Restaurar ancho original
-                    document.body.removeChild(classroomContainerForPdf); // Eliminar contenedor temporal
+                    // Always revert original styles and remove tempContainer
+                    diagramElement.style.overflowX = originalDiagramOverflowX;
+                    diagramElement.style.width = originalDiagramWidth; // Revert to original captured style
+                    mainContainer.style.maxWidth = originalMainContainerMaxWidth;
+                    document.body.style.overflow = originalBodyOverflow;
+                    if (document.body.contains(tempContainer)) {
+                        document.body.removeChild(tempContainer);
+                    }
                 }
             });
 
             /**
-             * Exporta los nombres de los estudiantes del diagrama del aula a un archivo CSV.
-             * Incluye el grado, filas, columnas y una lista numerada de estudiantes.
+             * Exports the current classroom layout to a CSV file.
              */
             exportExcelBtn.addEventListener('click', () => {
-                console.log("Botón 'Exportar a Excel (CSV)' clicado!");
+                console.log('Botón "Exportar a Excel (CSV)" clicado!');
                 const numRows = parseInt(numRowsInput.value);
                 const numCols = parseInt(numColsInput.value);
-                const selectedGrade = gradeSelect.value;
-                const seatInputs = document.querySelectorAll('.seat-input');
-                if (seatInputs.length === 0) {
-                    showMessage('No hay un diagrama de aula para exportar a Excel. ¡Crea uno primero!', 'info');
+                const seats = Array.from(classroomDiagramDiv.querySelectorAll('.seat-input')).map(input => input.value || '');
+
+                if (seats.length === 0) {
+                    showMessage('No hay datos en el esquema para exportar a CSV.', 'error');
                     return;
                 }
-                console.log('Generando contenido CSV.');
 
+                let csvContent = `Grado: ${gradeSelect.value}\n`;
+                csvContent += `Filas: ${numRows},Columnas: ${numCols}\n\n`;
 
-                let csvContent = `Grado: ${selectedGrade}\n`;
-                csvContent += `Total Filas: ${numRows}\nTotal Columnas: ${numCols}\n\n`;
-                csvContent += "Numero,Nombre del Estudiante\n";
+                // Add header row for student names
+                let headerRow = [];
+                for (let c = 0; c < numCols; c++) {
+                    headerRow.push(`Columna ${c + 1}`);
+                }
+                csvContent += headerRow.join(',') + '\n';
 
-                let studentCount = 1;
-                for (let i = 0; i < seatInputs.length; i++) {
-                    let studentName = seatInputs[i].value.trim();
-                    
-                    if (studentName) {
-                        // Manejar comas y comillas dobles en los nombres de los estudiantes para CSV
-                        if (studentName.includes(',') || studentName.includes('"')) {
-                            studentName = `"${studentName.replace(/"/g, '""')}"`;
-                        }
-                        csvContent += `${studentCount},${studentName}\n`;
-                        studentCount++;
+                // Add seat data
+                for (let r = 0; r < numRows; r++) {
+                    let rowData = [];
+                    for (let c = 0; c < numCols; c++) {
+                        const index = r * numCols + c;
+                        // Escape commas in student names
+                        const studentName = seats[index].includes(',') ? `"${seats[index]}"` : seats[index];
+                        rowData.push(studentName);
                     }
+                    csvContent += rowData.join(',') + '\n';
                 }
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
-                if (link.download !== undefined) {
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `distribucion_aula_${selectedGrade}_enumerada.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    showMessage('Archivo Excel (CSV) enumerado exportado con éxito.', 'success');
-                    console.log('Archivo CSV exportado correctamente.');
-                } else {
-                    showMessage('Tu navegador no soporta la descarga de archivos CSV directamente.', 'error');
-                    console.error('Error: Navegador no soporta descarga de CSV.');
-                }
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', `distribucion_aula_${gradeSelect.value}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showMessage('¡Distribución exportada a Excel (CSV)!', 'success');
             });
 
             /**
-             * Carga los nombres de los estudiantes desde un archivo CSV seleccionado y rellena el diagrama del aula.
-             * Se espera que el archivo CSV tenga una fila de encabezado y luego "Numero,Nombre del Estudiante".
-             * También intenta analizar "Grado:", "Total Filas:", "Total Columnas:" de las primeras líneas.
+             * Loads classroom layout from a CSV file.
              */
             loadCsvBtn.addEventListener('click', () => {
-                console.log("Botón 'Cargar desde CSV' clicado!");
+                console.log('Botón "Cargar desde CSV" clicado!');
+                if (!isAuthReady) {
+                    showMessage('La autenticación no está lista. Por favor, espera o inicia sesión.', 'error');
+                    return;
+                }
+                if (!isUserAuthorized()) {
+                    showMessage('No tienes permiso para cargar una distribución desde CSV. Solo usuarios autorizados pueden realizar cambios.', 'error');
+                    return;
+                }
+
                 const file = csvFileInput.files[0];
                 if (!file) {
-                    showMessage('Por favor, selecciona un archivo CSV primero.', 'error');
-                    console.error('Error: No se ha seleccionado ningún archivo CSV.');
+                    showMessage('Por favor, selecciona un archivo CSV para cargar.', 'error');
                     return;
                 }
-
-                if (!file.name.endsWith('.csv')) {
-                    showMessage('Por favor, selecciona un archivo CSV. Puedes exportar tu Excel a CSV primero.', 'error');
-                    console.error('Error: Archivo seleccionado no es CSV.');
-                    return;
-                }
-                console.log('Archivo CSV seleccionado:', file.name);
-
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    const text = e.target.result;
                     try {
-                        const csvContent = e.target.result;
-                        const rows = csvContent.split('\n').map(row => row.trim()).filter(row => row !== '');
+                        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                         
-                        let loadedGrade = null;
-                        let loadedNumRows = null;
-                        let loadedNumCols = null;
-                        let dataStartIndex = 0;
-
-                        // Analizar la información del encabezado
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            if (row.startsWith('Grado:')) {
-                                loadedGrade = row.split(':')[1].trim();
-                                console.log('CSV Header - Grado:', loadedGrade);
-                            } else if (row.startsWith('Total Filas:')) {
-                                loadedNumRows = parseInt(row.split(':')[1].trim());
-                                console.log('CSV Header - Total Filas:', loadedNumRows);
-                            } else if (row.startsWith('Total Columnas:')) {
-                                loadedNumCols = parseInt(row.split(':')[1].trim());
-                                console.log('CSV Header - Total Columnas:', loadedNumCols);
-                            } else if (row.toLowerCase().includes('numero,nombre del estudiante')) {
-                                dataStartIndex = i + 1; // Los datos comienzan después de este encabezado
-                                console.log('CSV Data Start Index:', dataStartIndex);
-                                break;
-                            }
+                        // Expect first line to be "Grado: XXX"
+                        const gradeLine = lines.shift();
+                        const gradeMatch = gradeLine.match(/Grado:\s*(\S+)/);
+                        if (gradeMatch && gradeMatch[1]) {
+                            gradeSelect.value = gradeMatch[1];
+                        } else {
+                            showMessage('Error al leer el grado del archivo CSV. Asegúrate de que la primera línea sea "Grado: XXX".', 'error');
+                            return;
                         }
-                        
-                        const studentNames = [];
-                        for (let i = dataStartIndex; i < rows.length; i++) {
-                            const row = rows[i];
-                            let parts = [];
-                            let inQuote = false;
-                            let currentPart = '';
-                            // Análisis manual de CSV para manejar comas dentro de cadenas entrecomilladas
-                            for (let char of row) {
-                                if (char === '"') {
-                                    inQuote = !inQuote;
-                                } else if (char === ',' && !inQuote) {
-                                    parts.push(currentPart);
-                                    currentPart = '';
-                                } else {
-                                    currentPart += char;
+
+                        // Expect second line to be "Filas: R,Columnas: C"
+                        const dimensionsLine = lines.shift();
+                        const dimensionsMatch = dimensionsLine.match(/Filas:\s*(\d+),Columnas:\s*(\d+)/);
+                        if (dimensionsMatch && dimensionsMatch[1] && dimensionsMatch[2]) {
+                            const loadedRows = parseInt(dimensionsMatch[1]);
+                            const loadedCols = parseInt(dimensionsMatch[2]);
+                            numRowsInput.value = loadedRows;
+                            numColsInput.value = loadedCols;
+                            
+                            // Recreate layout based on loaded dimensions
+                            createLayoutBtn.click(); // Simulate click to create the grid structure
+                        } else {
+                            showMessage('Error al leer las dimensiones del archivo CSV. Asegúrate de que la segunda línea sea "Filas: R,Columna: C".', 'error');
+                            return;
+                        }
+
+                        // Skip header row for student names
+                        lines.shift(); 
+
+                        const seatInputs = classroomDiagramDiv.querySelectorAll('.seat-input');
+                        let seatIndex = 0;
+                        for (let i = 0; i < lines.length; i++) {
+                            const rowValues = lines[i].split(',').map(cell => cell.replace(/^"|"$/g, '')); // Remove quotes
+                            for (let j = 0; j < rowValues.length; j++) {
+                                if (seatInputs[seatIndex]) {
+                                    seatInputs[seatIndex].value = rowValues[j];
+                                    seatIndex++;
                                 }
                             }
-                            parts.push(currentPart); // Añadir la última parte
-
-                            let studentName = parts.slice(1).join(',').trim(); // Unir las partes después del número
-                            
-                            // Eliminar comillas circundantes y escapar comillas dobles si están presentes
-                            if (studentName.startsWith('"') && studentName.endsWith('"')) {
-                                studentName = studentName.slice(1, -1).replace(/""/g, '"');
-                            }
-                            studentNames.push(studentName);
                         }
-                        console.log('Nombres de estudiantes cargados desde CSV:', studentNames);
-
-
-                        // Actualizar los campos de entrada y crear el diseño
-                        if (loadedGrade) {
-                            gradeSelect.value = loadedGrade;
-                        }
-                        if (loadedNumRows) {
-                            numRowsInput.value = loadedNumRows;
-                        }
-                        if (loadedNumCols) {
-                            numColsInput.value = loadedNumCols;
-                        }
-
-                        // Activar la creación del diseño para asegurar que la cuadrícula coincida con las dimensiones del CSV
-                        createLayoutBtn.click(); // This will also call showMessage
-
-                        // Rellenar los asientos con los nombres de los estudiantes cargados
-                        const seatInputs = document.querySelectorAll('.seat-input');
-                        studentNames.forEach((name, index) => {
-                            if (seatInputs[index]) {
-                                seatInputs[index].value = name;
-                            }
-                        });
-                        showMessage('Archivo CSV cargado y distribución de aula actualizada con éxito.', 'success');
-                        console.log('Distribución de aula actualizada desde CSV.');
-
-                        lastUpdateDisplay.textContent = 'Cargado desde CSV (sin fecha ni usuario guardados en Firestore).';
-
-
-                    } catch (error) {
-                        console.error('Error al procesar el archivo CSV:', error);
-                        showMessage('Error al leer el archivo CSV. Asegúrate de que el formato sea correcto y que el archivo esté bien codificado. Detalles: ' + error.message, 'error');
+                        showMessage('¡Distribución cargada desde CSV con éxito!', 'success');
+                    } catch (parseError) {
+                        console.error('Error al parsear el archivo CSV:', parseError);
+                        showMessage(`Error al procesar el archivo CSV: ${parseError.message}. Asegúrate de que el formato sea correcto.`, 'error');
                     }
+                };
+                reader.onerror = () => {
+                    showMessage('Error al leer el archivo CSV.', 'error');
                 };
                 reader.readAsText(file);
             });
